@@ -17,7 +17,7 @@ const OBJECTS = [
   { name: 'Конь',       realM: 30,  angleDeg: 0,    labelH: 0.5, build: 'horse' },
   { name: 'Волк',       realM: 50,  angleDeg: 110,  labelH: 0.2, build: 'wolf' },
   { name: 'Автомобиль', realM: 100, angleDeg: -70,  labelH: 0.3, build: 'car' },
-  { name: 'Дом',        realM: 150, angleDeg: 180,  labelH: 0.8, build: 'house' },
+  { name: 'Дом',        realM: 150, angleDeg: -35,  labelH: 0.8, build: 'house' },
 ];
 const FOREST = { name: 'Край леса', realM: 200, fromDeg: 150, toDeg: 230 };
 
