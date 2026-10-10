@@ -105,9 +105,8 @@ export const WORLD_LIGHT = {
     { name: 'Сумерки', lux: 1 },
     { name: 'Светло', lux: 10000 },
   ],
-  // Render intensity = sqrt(lux) * luxToRender. Set by screenshot: 0.2 makes 'Светло' (10 000 lx) read as day.
-  // At real dusk and soft-moonlight levels (1 and 10 lx) the picture stays dark on purpose: that is the physics.
-  luxToRender: 0.2,
+  luxToRender: 1.2,
+  luxExponent: 0.3055,   // intensity = 1.2 * lux^0.3055: 1 lx -> 1.2 (dusk), 10 000 lx -> 20 (day), both checked by screenshot
   ambientBase: 1,
   hemiBase: 1,
   startLevel: 0,

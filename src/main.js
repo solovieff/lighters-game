@@ -46,7 +46,7 @@ function setWorldLight(index) {
   worldLevel = (index + WORLD_LIGHT.levels.length) % WORLD_LIGHT.levels.length;
   const lv = WORLD_LIGHT.levels[worldLevel];
   // Render intensity follows the real lux of the level through one fixed factor.
-  const render = Math.sqrt(lv.lux) * WORLD_LIGHT.luxToRender;   // sqrt: dusk and soft light stay visibly different
+  const render = lv.lux > 0 ? WORLD_LIGHT.luxToRender * Math.pow(lv.lux, WORLD_LIGHT.luxExponent) : 0;   // power curve: dusk and day both read right
   worldAmbient.intensity = render;
   worldHemi.intensity = render;
   bus.emit('worldLight', { name: lv.name, index: worldLevel });
@@ -240,6 +240,7 @@ const loop = new Loop(
       const axisNow = hero.beamTarget.clone().sub(hero.headWorld).normalize();
       level.lux = luxFor(hero.headWorld, axisNow, power.cd * dimNow, power.lumens * dimNow);
       hero.halo.visible = level.usesHalo;   // the range has no halo (honest lux readout)
+      beamVis.castsLight = level.usesHalo;   // the range does not light the scene (same rule as the halo)
       level.worldLevel = worldLevel;
       level.update(dt, hero.position, power, gfx.camera);
       if (level.atExit(hero.position.x) && !victoryShown) {

@@ -61,6 +61,7 @@ function makeMotes() {
 export class BeamVisual {
   /** @param {THREE.Scene} scene */
   constructor(scene) {
+    this.castsLight = true;   // set false on the range
     this.spot = new THREE.SpotLight(0xffffff, 0, 10, 0.2, 0.6, BEAM_VIS.decay);
     this.spot.castShadow = true; // only the player's light casts shadows
     this.spot.shadow.mapSize.set(RENDER.shadowMapSize, RENDER.shadowMapSize);
@@ -131,7 +132,8 @@ export class BeamVisual {
 
     const [r, g, b] = kelvinToRgb(s.cct);
     this.spot.color.setRGB(r, g, b);
-    this.spot.intensity = BEAM_VIS.intensityK * Math.log10(s.lumens + 1);
+    // On levels that measure (the range) the SpotLight stays off: the cone is only a direction marker.
+    this.spot.intensity = this.castsLight ? BEAM_VIS.intensityK * Math.log10(s.lumens + 1) : 0;
     this.spot.angle = half;
     this.spot.distance = len * 1.3;
     this.spot.position.set(s.origin.x, s.origin.y, s.origin.z);
