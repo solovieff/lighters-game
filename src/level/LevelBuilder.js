@@ -12,6 +12,11 @@ const PROP_STYLE = {
   ruler: { color: '#9aa0a8', roughness: 0.3, metalness: 0.9, metal: true },
   clip: { color: '#b8bec8', roughness: 0.3, metalness: 0.9, metal: true },
   crate: { color: '#7a5a34', roughness: 0.9, metalness: 0.0, metal: false },   // a wooden box: taller than one hop
+  // Basement finds: a nail, a battery, a button, a key.
+  nail: { color: '#7d7f86', roughness: 0.4, metalness: 0.8, metal: true },
+  battery: { color: '#2c5fa8', roughness: 0.5, metalness: 0.2, metal: false },
+  button: { color: '#b0303a', roughness: 0.6, metalness: 0.0, metal: false },
+  key: { color: '#b89a4e', roughness: 0.35, metalness: 0.9, metal: true },
 };
 
 const propMats = {};
@@ -157,6 +162,23 @@ export function buildProps(root, props) {
     } else if (p.kind === 'ruler') {
       addMesh(root, new THREE.BoxGeometry(0.3, 0.02, 0.05), mat, p.x, 0.01, p.z);
       colliders.push(collider(p.x, 0.01, p.z, 0.3, 0.02, 0.05, style.metal));
+    } else if (p.kind === 'nail') {
+      // A long thin nail lying flat: a thin strip along X.
+      addMesh(root, new THREE.CylinderGeometry(0.008, 0.008, 0.18, 8), mat, p.x, 0.008, p.z, Math.PI / 2);
+      colliders.push(collider(p.x, 0.008, p.z, 0.18, 0.016, 0.016, style.metal));
+    } else if (p.kind === 'battery') {
+      // A AA battery lying on its side: a short cylinder along X.
+      addMesh(root, new THREE.CylinderGeometry(0.025, 0.025, 0.05, 16), mat, p.x, 0.025, p.z, Math.PI / 2);
+      colliders.push(collider(p.x, 0.025, p.z, 0.05, 0.05, 0.05, style.metal));
+    } else if (p.kind === 'button') {
+      // A small round button, flat on the floor.
+      addMesh(root, new THREE.CylinderGeometry(0.025, 0.025, 0.012, 16), mat, p.x, 0.006, p.z);
+      colliders.push(collider(p.x, 0.006, p.z, 0.05, 0.012, 0.05, style.metal));
+    } else if (p.kind === 'key') {
+      // A key: a flat bar with a round head at one end.
+      addMesh(root, new THREE.BoxGeometry(0.1, 0.008, 0.02), mat, p.x, 0.004, p.z);
+      addMesh(root, new THREE.CylinderGeometry(0.018, 0.018, 0.008, 12), mat, p.x - 0.06, 0.004, p.z);
+      colliders.push(collider(p.x, 0.004, p.z, 0.12, 0.008, 0.04, style.metal));
     } else if (p.kind === 'clip') {
       addMesh(root, new THREE.BoxGeometry(0.02, 0.01, 0.06), mat, p.x, 0.005, p.z);
       colliders.push(collider(p.x, 0.005, p.z, 0.02, 0.01, 0.06, style.metal));

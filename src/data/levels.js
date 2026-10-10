@@ -112,11 +112,14 @@ export const LEVEL_2 = {
   ],
 
   props: [
-    { kind: 'paper', x: 1.0, z: 0.8 },
-    { kind: 'coin', x: 2.8, z: -0.9, count: 2 },
-    { kind: 'ruler', x: 4.2, z: 0.9 },
-    { kind: 'clip', x: 5.8, z: -0.7 },
-    { kind: 'paper', x: 7.1, z: 0.4 },
+    { kind: 'nail', x: 0.9, z: 0.6 },
+    { kind: 'battery', x: 2.5, z: -0.9 },
+    { kind: 'button', x: 4.1, z: 0.3 },
+    { kind: 'key', x: 5.6, z: -1.1 },
+    { kind: 'paper', x: 1.2, z: -0.2 },
+    { kind: 'clip', x: 7.2, z: 0.9 },
+    { kind: 'nail', x: 8.2, z: -0.6 },
+    { kind: 'battery', x: 6.1, z: 1.1 },
   ],
 
   shards: [
@@ -132,9 +135,10 @@ export const LEVEL_2 = {
     { id: 'mid', x: 4.8, z: 0.9 },
   ],
 
+  // Enemies appear well ahead of the hero (2-3 m), not next to him: the hero walks up to them and uses the beam.
   waves: [
-    { id: 'w1', triggerX: 1.8, enemies: [{ type: 'spider', x: 2.8, z: 0.6 }, { type: 'crawler', x: 3.0, z: -0.6 }] },
-    { id: 'w2', triggerX: 5.0, enemies: [{ type: 'spider', x: 6.0, z: -0.5 }, { type: 'spider', x: 6.4, z: 0.6 }] },
+    { id: 'w1', triggerX: 0.5, enemies: [{ type: 'spider', x: 3.2, z: 0.7 }, { type: 'crawler', x: 3.4, z: -0.7 }] },
+    { id: 'w2', triggerX: 3.6, enemies: [{ type: 'spider', x: 7.0, z: -0.6 }, { type: 'spider', x: 7.4, z: 0.7 }] },
   ],
 
   boss: null,
