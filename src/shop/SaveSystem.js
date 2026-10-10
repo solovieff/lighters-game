@@ -61,6 +61,13 @@ export const SaveSystem = {
     return this.load().mods.includes(modId);
   },
 
+  /** Clears level progress only: sparks, flashlights and mods stay. */
+  resetLevelProgress() {
+    const d = this.load();
+    d.levelsDone = [];
+    this.save(d);
+  },
+
   completeLevel(levelId) {
     const d = this.load();
     if (!d.levelsDone.includes(levelId)) d.levelsDone.push(levelId);

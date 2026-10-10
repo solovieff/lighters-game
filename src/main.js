@@ -23,6 +23,7 @@ import { LEVEL_1, LEVEL_2 } from './data/levels.js';
 import { BasementLevel } from './level/BasementLevel.js';
 import { TableLevel } from './level/TableLevel.js';
 import { SaveSystem } from './shop/SaveSystem.js';
+import { FinalDialog } from './ui/FinalDialog.js';
 import { Workshop } from './shop/Workshop.js';
 import { RangeLevel } from './level/RangeLevel.js';
 import { MainMenu } from './ui/MainMenu.js';
@@ -152,6 +153,20 @@ function nextLabel() {
   return CAMPAIGN.find((id) => !done.includes(id)) || CAMPAIGN[CAMPAIGN.length - 1];
 }
 
+// Final dialog after the last level: start over (progress reset) or back to the menu (progress kept).
+const finalRoot = document.createElement('div');
+finalRoot.id = 'final-dialog';
+document.body.appendChild(finalRoot);
+const finalDialog = new FinalDialog(finalRoot, (choice) => {
+  if (choice === 'restart') {
+    SaveSystem.resetLevelProgress();
+    hud.setHidden(false);
+    runLevel(CAMPAIGN[0]);
+  } else {
+    backToMenu();
+  }
+});
+
 // Main menu: Играть, Мастерская, Полигон.
 const menuRoot = document.createElement('div');
 menuRoot.id = 'main-menu';
@@ -253,7 +268,6 @@ window.addEventListener('keydown', (e) => {
   if (states.is(STATES.VICTORY) && (e.code === 'Enter' || e.code === 'NumpadEnter')) {
     const next = CAMPAIGN[CAMPAIGN.indexOf(currentLabel()) + 1];
     if (next) runLevel(next);        // a fresh battery and lives come with the level start
-    else backToMenu();
     return;
   }
   if (states.is(STATES.WORKSHOP)) {
@@ -310,12 +324,19 @@ function showVictory() {
   const total = SaveSystem.addSparks(level.sparks);
   const idx = CAMPAIGN.indexOf(currentLabel());
   const next = CAMPAIGN[idx + 1];
+  states.go(STATES.VICTORY);
+  if (!next) {
+    // The last level of the campaign: the final dialog (start over or menu).
+    hud.setOverlay(null);
+    hud.setHidden(true);   // the HUD stays off under the final dialog
+    finalDialog.show();
+    return;
+  }
   hud.setOverlay({
     title: 'Уровень пройден',
     lines: [`Искры за уровень: ${level.sparks}`, `Всего Искр: ${total}`],
-    footer: next ? 'Enter — следующий уровень' : 'Enter — в меню',
+    footer: 'Enter — следующий уровень',
   });
-  states.go(STATES.VICTORY);
   console.log(`[victory] Искры ${level.sparks}, всего ${total}`);
 }
 
