@@ -18,7 +18,7 @@ import { luxOnTarget, dpsFromLux } from './light/LightDamage.js';
 import { HUD } from './ui/HUD.js';
 import { effectiveSpec } from './data/effects.js';
 import { LEVEL_1 } from './data/levels.js';
-import { Level } from './level/Level.js';
+import { TableLevel } from './level/TableLevel.js';
 import { SaveSystem } from './shop/SaveSystem.js';
 import { Workshop } from './shop/Workshop.js';
 import { RangeLevel } from './level/RangeLevel.js';
@@ -68,7 +68,7 @@ const health = new HeroHealth();
 
 // The current level is the chosen one: the drawer by default, the test range with T from the menu.
 // Both expose the same contract (colliders, enemies, update, bossInfo, atExit), so main.js does not special-case them.
-let level = new Level(scene, LEVEL_1, particles, spec.cri);
+let level = new TableLevel(scene, LEVEL_1, spec, particles);
 const luxFor = (origin, axis, beamCd, beamLumens) => (p) =>
   luxOnTarget({ origin, axis, point: p, cd: beamCd, lumens: beamLumens, boxes: level.colliders });
 
@@ -125,7 +125,7 @@ function openWorkshop() {
 /** Switches to the test range: its own level, no walls, props or enemies. */
 function startRange() {
   level.dispose();
-  level = new RangeLevel(scene, { x: LEVEL_1.start.x + 0.2, z: LEVEL_1.start.z }, () => 0);
+  level = new RangeLevel(scene, { x: LEVEL_1.start.x + 0.2, z: LEVEL_1.start.z }, spec);
   hero.position.set(LEVEL_1.start.x, 0, LEVEL_1.start.z);
   overlay.remove();
   states.go(STATES.PLAYING);
@@ -313,10 +313,8 @@ const loop = new Loop(
       }
     }
 
-    if (level instanceof RangeLevel) {
-      level.lux = luxFor(origin, axis, beamCd, beamLumens);
-      level.update(gfx.camera, window.innerWidth, window.innerHeight);
-    }
+    if (typeof level.lux === 'function') level.lux = luxFor(origin, axis, beamCd, beamLumens);
+    if (level instanceof RangeLevel) level.update(gfx.camera, window.innerWidth, window.innerHeight);
     particles.update(dt);
     hud.update(dt, power);
     input.endFrame();

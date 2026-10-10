@@ -3,26 +3,28 @@
 // Each target shows its game distance, the real distance (ANSI FL1 scale) and the lux the beam delivers.
 import * as THREE from 'three';
 import { RANGE_SCALE } from '../core/config.js';
+import { Level } from './Level.js';
 
 // Distances in game metres. Real range ~ up to 27 m (MS18), so the far end goes to 10 game m (500 real m).
 export const RANGE_DISTANCES_M = [0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0];
 
-export class RangeLevel {
+export class RangeLevel extends Level {
   /**
    * @param {THREE.Scene} scene
    * @param {{x:number,z:number}} heroStart where the hero stands
    */
-  constructor(scene, heroStart, lux) {
-    this.scene = scene;
+  /**
+   * @param {THREE.Scene} scene
+   * @param {{x:number,z:number}} heroStart where the hero stands
+   * @param {object} spec the hero's flashlight spec (the range does not decide what the hero carries)
+   */
+  constructor(scene, heroStart, spec) {
+    super(scene, { targets: RANGE_DISTANCES_M }, spec);
     this.root = new THREE.Group();
     scene.add(this.root);
     this.targets = [];
     this.heroStart = heroStart;
-    this.colliders = [];   // no walls on the range
-    this.enemies = [];     // no enemies on the range
-    this.sparks = 0;
-    this.lux = lux;        // (point) => lux, set by main.js each frame
-    this.bossDefeated = false;
+    this.lux = () => 0;    // (point) => lux, set by main.js each frame
 
     // Floor for the range: plain dark board, enough to see the lit spot.
     const floor = new THREE.Mesh(
