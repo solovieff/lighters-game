@@ -10,6 +10,7 @@ import { StateManager, STATES } from './core/StateManager.js';
 import { bus } from './core/EventBus.js';
 import { Input } from './input/Input.js';
 import { FlashlightHero } from './entities/FlashlightHero.js';
+import { resolveRoute, navigate } from './core/Router.js';
 import { Dummy } from './entities/Dummy.js';
 import { PowerSystem } from './light/PowerSystem.js';
 import { BeamVisual } from './light/BeamVisual.js';
@@ -98,6 +99,8 @@ menuRoot.id = 'main-menu';
 document.body.appendChild(menuRoot);
 const menu = new MainMenu(menuRoot, (choice) => {
   hud.setHidden(false);
+  // Each choice gets its own address, so reload and back/forward keep the mode.
+  navigate(choice === 'level' ? 'level' : choice);
   if (choice === 'level') startGame();
   else if (choice === 'range') startRange();
   else if (choice === 'workshop') openWorkshop();
@@ -169,11 +172,14 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyC' && states.is(STATES.PLAYING)) power.setCharge(100); // test helper
 });
 // Start on the main menu. Test URLs skip it: ?range or ?play
-if (location.search.includes('range')) { hud.setHidden(false); startRange(); }
-else if (location.search.includes('play')) startGame();
+// Start target from the URL: /range, /level, /workshop, or the menu for /.
+const route = resolveRoute();
+if (route === 'range') { hud.setHidden(false); startRange(); }
+else if (route === 'level') startGame();
+else if (route === 'workshop') openWorkshop();
 else menu.show();
 // Hide the in-game HUD while the menu is on screen.
-if (!location.search.includes('range') && !location.search.includes('play')) hud.setHidden(true);   // menu only
+if (route === 'menu') hud.setHidden(true);   // HUD stays off on the menu
 
 /** Hit the hero from an enemy: applies charge loss with invulnerability and knockback. */
 function hitHero(pct, fromPos, source) {

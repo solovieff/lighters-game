@@ -98,12 +98,12 @@ export const WORLD_LIGHT = {
   ambientColor: '#8090b8',
   hemiSky: '#5a6a98',
   hemiGround: '#202020',
-  // Levels cycled with L. Multiplier on the base intensities below.
+  // Levels cycled with L. mul multiplies ambientBase / hemiBase (0.02). Values picked by screenshot, not by formula.
   levels: [
     { name: 'Темно', mul: 0 },
-    { name: 'Сумерки', mul: 0.05 / 0.02 },
-    { name: 'Мягко', mul: 0.2 / 0.02 },
-    { name: 'Светло', mul: 25.0 / 0.02 },
+    { name: 'Сумерки', mul: 120 },
+    { name: 'Мягко', mul: 300 },
+    { name: 'Светло', mul: 1250 },
   ],
   ambientBase: 0.02,
   hemiBase: 0.02,

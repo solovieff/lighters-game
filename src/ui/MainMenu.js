@@ -53,7 +53,7 @@ export class MainMenu {
         <div style="font-size:26px;color:${sel ? '#ffe9c8' : '#a9a396'}">${it.title}</div>
         <div style="font-size:13px;color:#7d8694;margin-top:4px">${it.sub}</div>`;
       row.onmouseenter = () => { this.index = i; this.renderItems(); };
-      row.onclick = () => this.choose();
+      row.onclick = () => { this.index = i; this.choose(); };   // click picks the row that was clicked
       this.list.appendChild(row);
     });
   }
