@@ -66,7 +66,7 @@ export class HUD {
     bus.on('lvp', () => this.showNotice('LVP'));
     bus.on('batteryLow', () => this.showNotice('Заряд низкий'));
     bus.on('turboBlocked', ({ tempC }) => this.showNotice(`Турбо недоступен: ${Math.round(tempC)} °C`));
-    bus.on('hint', ({ text }) => this.showHint(text));
+    bus.on('hint', ({ text, touch }) => this.showHint(text, { touch }));
   }
 
   /** Shows a short centred notice for about 1.8 s. */
@@ -77,13 +77,9 @@ export class HUD {
   }
 
   /** Shows a tutorial hint for about 5 s. */
-  showHint(text) {
-    // On a phone the keyboard wording is replaced by the touch controls.
-    const touch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
-    if (touch) {
-      text = text.replace('WASD — ходьба. Пробел — прыжок', 'Левый стик — ходьба, кнопка «Прыжок»')
-        .replace('Стрелки — повернуть луч по кругу', 'Правый стик — повернуть луч');
-    }
+  showHint(text, opts = {}) {
+    // Phones have no keyboard: key-only hints are skipped there, not reworded.
+    if (opts.touch === false && this.isTouch()) return;
     this.hint.textContent = text;
     this.hint.style.opacity = '1';
     this.hintTimer = 5;

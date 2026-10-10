@@ -63,7 +63,7 @@ export class MouseQuest {
       if (lux({ x: cx, y: 0.011, z: cz }) >= NOTICE_LUX) {
         this.state = 'run';
         this.group.visible = true;
-        bus.emit('hint', { text: 'Мышка! Она хочет карандаш' });
+        bus.emit('hint', { text: 'Мышка! Она хочет ящик' });
       }
     } else if (this.state === 'run') {
       const dx = pencil.x - this.group.position.x;

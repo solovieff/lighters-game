@@ -149,7 +149,7 @@ export class BasementLevel extends Level {
     for (const h of this.hints) {
       if (!h.shown && heroPos.x >= h.x) {
         h.shown = true;
-        bus.emit('hint', { text: h.text });
+        bus.emit('hint', { text: h.text, touch: h.touch });
       }
     }
 
