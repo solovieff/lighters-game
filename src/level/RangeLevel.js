@@ -1,7 +1,6 @@
-// Test range (Полигон): its own level. No enemies, no hero movement. The hero stays still and turns the beam.
-// Objects stand at REAL distances in metres (ANSI FL1 scale): horse 30 m, wolf 50 m, car 100 m, house 150 m,
-// forest edge 200 m. The game distance is internal: gameM = realM * RANGE_SCALE (0.02).
-// Objects are drawn larger than life so they read on screen; labels always show the real distance.
+// Test range (Полигон): its own level. No enemies, no hero movement. The hero stays in the middle and turns the beam
+// through a full circle. Objects stand all around him at REAL distances in metres (ANSI FL1 scale), so any beam
+// direction lights something. The game distance is internal: gameM = realM * RANGE_SCALE (0.02).
 import * as THREE from 'three';
 import { RANGE_SCALE } from '../core/config.js';
 import { Level } from './Level.js';
@@ -9,8 +8,18 @@ import { AABB } from '../physics/Physics.js';
 
 const LENS_OFFSET_M = 0.118;   // head tip offset from the feet point along the beam (Convoy 118 mm)
 const BEAM_HEIGHT_M = 0.011;   // beam height above the floor (the head lies on the table)
-const TREE_COUNT = 46;
-const FOREST_DEPTH_M = 0.45;   // game metres deep (about 22 real m)
+const TREE_COUNT_PER_ARC = 14;
+const FOREST_ARC_DEG = 60;     // angular width of the forest edge on the circle
+
+// Objects on the circle. angleDeg: 0 = straight ahead (-Z), 90 = right, 180 = behind, -90 = left.
+// Each object sits at its real distance, so the lux it receives is the honest value for that distance.
+const OBJECTS = [
+  { name: 'Конь',       realM: 30,  angleDeg: 0,    labelH: 0.5, build: 'horse' },
+  { name: 'Волк',       realM: 50,  angleDeg: 110,  labelH: 0.2, build: 'wolf' },
+  { name: 'Автомобиль', realM: 100, angleDeg: -70,  labelH: 0.3, build: 'car' },
+  { name: 'Дом',        realM: 150, angleDeg: 180,  labelH: 0.8, build: 'house' },
+];
+const FOREST = { name: 'Край леса', realM: 200, fromDeg: 150, toDeg: 230 };
 
 /** Seeded random generator so the forest looks the same every time the range starts. */
 function seeded(seed) {
@@ -38,7 +47,7 @@ function box(g, w, h, d, mat, x, y, z, rotX = 0) {
   return m;
 }
 
-/** Wolf, crouched and stalking, facing the hero (+Z). */
+/** Wolf, crouched and stalking, facing the centre (its local +Z). */
 function buildWolf(g) {
   const fur = new THREE.MeshStandardMaterial({ color: '#4a4c52', roughness: 0.95 });
   const eyes = new THREE.MeshBasicMaterial({ color: '#ffd45a', toneMapped: false });
@@ -60,36 +69,35 @@ function buildWolf(g) {
 function buildHorse(g) {
   const coat = new THREE.MeshStandardMaterial({ color: '#6b4a2e', roughness: 0.9 });
   const mane = new THREE.MeshStandardMaterial({ color: '#2a1d12', roughness: 1 });
-  box(g, 0.34, 0.14, 0.12, coat, 0, 0.22, 0);            // barrel
-  box(g, 0.1, 0.2, 0.08, coat, 0.2, 0.36, 0, -0.5);      // neck
-  box(g, 0.13, 0.08, 0.08, coat, 0.27, 0.46, 0);         // head
-  box(g, 0.04, 0.12, 0.03, mane, 0.16, 0.42, 0);         // mane
-  box(g, 0.03, 0.14, 0.03, mane, -0.2, 0.25, 0, 0.4);    // tail
+  box(g, 0.34, 0.14, 0.12, coat, 0, 0.22, 0);
+  box(g, 0.1, 0.2, 0.08, coat, 0.2, 0.36, 0, -0.5);
+  box(g, 0.13, 0.08, 0.08, coat, 0.27, 0.46, 0);
+  box(g, 0.04, 0.12, 0.03, mane, 0.16, 0.42, 0);
+  box(g, 0.03, 0.14, 0.03, mane, -0.2, 0.25, 0, 0.4);
   for (const [x, z] of [[-0.12, -0.04], [-0.12, 0.04], [0.12, -0.04], [0.12, 0.04]]) {
-    box(g, 0.035, 0.22, 0.035, coat, x, 0.11, z);        // legs
+    box(g, 0.035, 0.22, 0.035, coat, x, 0.11, z);
   }
 }
 
-/** Car, side view, long axis along X. Body, cabin with windows, four wheels. */
+/** Car, side view, long axis along X. */
 function buildCar(g) {
   const paint = new THREE.MeshStandardMaterial({ color: '#7a1f1f', metalness: 0.4, roughness: 0.45 });
   const glass = new THREE.MeshStandardMaterial({ color: '#1c2630', metalness: 0.2, roughness: 0.1 });
   const tyre = new THREE.MeshStandardMaterial({ color: '#111', roughness: 0.9 });
-  box(g, 0.44, 0.09, 0.2, paint, 0, 0.07, 0);            // lower body
-  box(g, 0.24, 0.08, 0.18, paint, -0.02, 0.15, 0);       // cabin
-  box(g, 0.2, 0.06, 0.19, glass, -0.02, 0.155, 0);       // windows band
+  box(g, 0.44, 0.09, 0.2, paint, 0, 0.07, 0);
+  box(g, 0.24, 0.08, 0.18, paint, -0.02, 0.15, 0);
+  box(g, 0.2, 0.06, 0.19, glass, -0.02, 0.155, 0);
   for (const x of [-0.14, 0.14]) {
-    const w = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.03, 16), tyre);
-    w.rotation.z = Math.PI / 2;
-    w.position.set(x, 0.045, 0.11);
-    g.add(w);
-    const w2 = w.clone();
-    w2.position.z = -0.11;
-    g.add(w2);
+    for (const z of [-0.11, 0.11]) {
+      const w = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.03, 16), tyre);
+      w.rotation.z = Math.PI / 2;
+      w.position.set(x, 0.045, z);
+      g.add(w);
+    }
   }
 }
 
-/** Two-storey house with a lit window and a pitched roof. Front faces the hero. */
+/** House with a lit window and a pitched roof. */
 function buildHouse(g) {
   const wall = new THREE.MeshStandardMaterial({ color: '#8a7456', roughness: 0.95 });
   const roof = new THREE.MeshStandardMaterial({ color: '#3a2620', roughness: 0.9 });
@@ -100,15 +108,24 @@ function buildHouse(g) {
   r.position.set(0, 0.61, 0);
   r.castShadow = true;
   g.add(r);
-  box(g, 0.1, 0.12, 0.01, glass, -0.14, 0.3, 0.255);     // lit window
+  box(g, 0.1, 0.12, 0.01, glass, -0.14, 0.3, 0.255);
   box(g, 0.1, 0.12, 0.01, glass, 0.14, 0.3, 0.255);
-  box(g, 0.12, 0.2, 0.01, wall, 0, 0.1, 0.255);          // door
+  box(g, 0.12, 0.2, 0.01, wall, 0, 0.1, 0.255);
+}
+
+const BUILDERS = { horse: buildHorse, wolf: buildWolf, car: buildCar, house: buildHouse };
+
+/** Point on the circle at a real distance and an angle (game metres). Angle 0 = -Z, positive = right. */
+function polar(centre, realM, angleDeg) {
+  const r = realM * RANGE_SCALE;
+  const a = THREE.MathUtils.degToRad(angleDeg);
+  return { x: centre.x + Math.sin(a) * r, z: centre.z - Math.cos(a) * r };
 }
 
 export class RangeLevel extends Level {
   /**
    * @param {THREE.Scene} scene
-   * @param {{x:number,z:number}} heroStart where the hero stands (feet point)
+   * @param {{x:number,z:number}} heroStart where the hero stands (feet point). The circle is centred on the lens.
    * @param {object} spec the hero's flashlight spec (the range does not decide what the hero carries)
    */
   constructor(scene, heroStart, spec) {
@@ -118,60 +135,53 @@ export class RangeLevel extends Level {
     this.targets = [];
     this.lux = () => 0;   // (point) => lux, set by main.js each frame
 
-    // Floor: plain dark board.
+    // Floor: plain dark board, big enough for the whole circle.
     const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(14, 14),
+      new THREE.PlaneGeometry(16, 16),
       new THREE.MeshStandardMaterial({ color: '#2a2018', roughness: 0.85 })
     );
     floor.rotation.x = -Math.PI / 2;
-    floor.position.set(heroStart.x + 4, 0, heroStart.z);
+    floor.position.set(heroStart.x, 0, heroStart.z);
     floor.receiveShadow = true;
     this.root.add(floor);
 
-    // Distances are measured from the lens, not from the feet: the beam starts there.
-    const lensZ = heroStart.z - LENS_OFFSET_M;
-    const x = heroStart.x;
-    const at = (realM) => lensZ - realM * RANGE_SCALE;
+    // Distances are measured from the lens, not from the feet: the circle is centred on the lens.
+    const centre = { x: heroStart.x, z: heroStart.z - LENS_OFFSET_M };
 
-    // Objects in order of distance, all on the beam axis.
-    // Sideways offsets (metres, game scale) keep objects apart on screen while staying inside the beam.
-    // Near objects stay close to the axis (a few cm would drop the lux a lot); far ones can sit wider.
-    this.placeObject({ name: 'Конь', realM: 30, build: buildHorse, labelH: 0.5, x: x - 0.03, z: at(30) });
-    this.placeObject({ name: 'Волк', realM: 50, build: buildWolf, labelH: 0.2, x: x + 0.04, z: at(50) });
-    this.placeObject({ name: 'Автомобиль', realM: 100, build: buildCar, labelH: 0.3, x: x - 0.12, z: at(100) });
-    this.placeObject({ name: 'Дом', realM: 150, build: buildHouse, labelH: 0.8, x: x + 0.12, z: at(150) });
-    this.buildForest(x, at(200) - 0.05, FOREST_DEPTH_M);
-    this.placeObject({ name: 'Край леса', realM: 200, build: null, labelH: 0.3, x: x + 0.06, z: at(200) });
-  }
-
-  /** Builds one object at (x, z) and adds its target. */
-  placeObject({ name, realM, build, labelH, x, z }) {
-    if (build) {
+    for (const o of OBJECTS) {
+      const p = polar(centre, o.realM, o.angleDeg);
       const g = new THREE.Group();
-      build(g);
-      g.position.set(x, 0, z);
+      BUILDERS[o.build](g);
+      g.position.set(p.x, 0, p.z);
+      g.rotation.y = THREE.MathUtils.degToRad(o.angleDeg);   // face the centre
       this.root.add(g);
+      this.addTarget({ name: o.name, realM: o.realM }, p.x, p.z, o.labelH);
     }
-    this.addTarget({ name, realM }, x, z, labelH);
+
+    this.buildForestArc(centre, FOREST);
+    const edge = polar(centre, FOREST.realM, (FOREST.fromDeg + FOREST.toDeg) / 2);
+    this.addTarget({ name: FOREST.name, realM: FOREST.realM }, edge.x, edge.z, 0.3);
   }
 
-  /** A forest belt: dark trunks with crowns. Trunks are colliders, so they block the beam. */
-  buildForest(x0, zStart, depth) {
+  /** Forest on an arc of the circle at 200 m: dark trunks with crowns. Trunks are colliders, so they block the beam. */
+  buildForestArc(centre, arc) {
     const rand = seeded(7);
     const bark = new THREE.MeshStandardMaterial({ color: '#2a1f16', roughness: 1 });
     const leaves = new THREE.MeshStandardMaterial({ color: '#1a2a1d', roughness: 0.9 });
-    for (let i = 0; i < TREE_COUNT; i++) {
-      const x = x0 + (rand() - 0.5) * 3.0;
-      const z = zStart - rand() * depth;
+    const count = TREE_COUNT_PER_ARC;
+    for (let i = 0; i < count; i++) {
+      const angle = arc.fromDeg + ((arc.toDeg - arc.fromDeg) * (i + rand() * 0.6)) / count;
+      const depth = (rand() - 0.5) * 0.06;   // a few cm of jitter in radius, so the edge is ragged
+      const p = polar(centre, arc.realM + depth / RANGE_SCALE, angle);
       const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.01, 0.1, 6), bark);
-      trunk.position.set(x, 0.05, z);
+      trunk.position.set(p.x, 0.05, p.z);
       trunk.castShadow = true;
       this.root.add(trunk);
       const crown = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.16, 7), leaves);
-      crown.position.set(x, 0.18, z);
+      crown.position.set(p.x, 0.18, p.z);
       crown.castShadow = true;
       this.root.add(crown);
-      this.colliders.push(AABB.fromCenterSize(x, 0.05, z, 0.02, 0.1, 0.02));
+      this.colliders.push(AABB.fromCenterSize(p.x, 0.05, p.z, 0.02, 0.1, 0.02));
     }
   }
 
@@ -210,14 +220,13 @@ export class RangeLevel extends Level {
   }
 
   /**
-   * Camera framing for the bench: high and to the side, looking across the range, so the objects
-   * spread left-to-right on screen instead of stacking along one line.
+   * Camera framing: high above the hero, looking down, so the whole circle fits the frame and the beam
+   * can be seen sweeping in any direction. Hero at the centre.
    */
   cameraFrame(camera, heroPos) {
-    // Behind the hero and above, pulled off to the side. Looks down the range toward the forest edge.
-    // Chosen so the whole run (hero to 200 m) fits the frame and objects spread sideways.
-    camera.position.set(heroPos.x + 0.9, 0.9, heroPos.z + 0.6);
-    camera.lookAt(heroPos.x - 0.02, 0.02, heroPos.z - 1.2);
+    // The circle is 200 m (4 game m) across, so the camera sits high enough to frame all of it.
+    camera.position.set(heroPos.x, 6.5, heroPos.z + 0.6);
+    camera.lookAt(heroPos.x, 0, heroPos.z);
   }
 
   /** Same contract as Level. The range is a shooting bench: the hero only turns the beam. */
