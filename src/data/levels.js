@@ -94,54 +94,58 @@ export const LEVEL_2 = {
   id: 'basement',
   name: 'Подвал',
   subtitle: 'Уровень 2',
-  bounds: { minX: -0.5, maxX: 7.0, halfZ: 0.75 },
-  wallHeight: 0.2,
-  wallThickness: 0.04,
+  // Wider and longer than the drawer: a room with space to move, not a lane.
+  bounds: { minX: -0.5, maxX: 9.0, halfZ: 1.5 },
+  wallHeight: 0.4,          // taller walls: this is a room, not a drawer
+  wallThickness: 0.06,
   start: { x: 0.0, z: 0.0 },
+  // The basement is lit more than the drawer: a bare bulb hangs here, so the default light is brighter.
 
-  // Internal walls: three staggered baffles, then a narrow passage ending at the exit.
+  // Pillars and walls the hero must go around. Open room with two wall bars and a gap to pass.
   partitions: [
-    { x0: 1.2, x1: 1.25, z0: -0.75, z1: 0.2 },   // baffle 1, gap at the bottom
-    { x0: 2.2, x1: 2.25, z0: -0.2, z1: 0.75 },   // baffle 2, gap at the top
-    { x0: 3.2, x1: 3.25, z0: -0.75, z1: 0.2 },   // baffle 3, gap at the bottom
-    { x0: 4.4, x1: 4.45, z0: -0.75, z1: -0.2 },  // narrow passage: two stubs with a gap in the middle
-    { x0: 4.4, x1: 4.45, z0: 0.2, z1: 0.75 },
+    { x0: 2.0, x1: 2.1, z0: -1.5, z1: -0.4 },   // bar 1 from the top wall, gap at the bottom
+    { x0: 3.4, x1: 3.5, z0: 0.4, z1: 1.5 },     // bar 2 from the bottom wall, gap at the top
+    { x0: 5.0, x1: 5.1, z0: -1.5, z1: 0.2 },    // bar 3, gap at the bottom
+    { x0: 6.5, x1: 6.6, z0: -0.2, z1: 1.5 },    // bar 4, gap at the top
+    { x0: 7.8, x1: 7.9, z0: -1.5, z1: -0.4 },   // last bar before the exit corner, gap at the bottom
+    { x0: 7.8, x1: 7.9, z0: 0.4, z1: 1.5 },
   ],
 
   props: [
-    { kind: 'paper', x: 0.7, z: 0.3 },
-    { kind: 'coin', x: 1.7, z: -0.3, count: 2 },
-    { kind: 'ruler', x: 2.7, z: 0.4 },
-    { kind: 'clip', x: 3.7, z: -0.4 },
+    { kind: 'paper', x: 1.0, z: 0.8 },
+    { kind: 'coin', x: 2.8, z: -0.9, count: 2 },
+    { kind: 'ruler', x: 4.2, z: 0.9 },
+    { kind: 'clip', x: 5.8, z: -0.7 },
+    { kind: 'paper', x: 7.1, z: 0.4 },
   ],
 
   shards: [
-    { x: 0.5, z: -0.5, value: 20 },
-    { x: 1.7, z: 0.5, value: 15 },
-    { x: 2.7, z: -0.5, value: 15 },
-    { x: 3.9, z: 0.4, value: 25 },
+    { x: 0.6, z: -1.0, value: 20 },
+    { x: 2.9, z: 1.0, value: 15 },
+    { x: 4.6, z: -0.8, value: 15 },
+    { x: 6.1, z: 0.9, value: 20 },
+    { x: 8.4, z: 0.0, value: 25 },
   ],
 
   checkpoints: [
-    { id: 'start', x: 0.0, z: 0.5 },
-    { id: 'mid', x: 2.7, z: 0.5 },
+    { id: 'start', x: 0.0, z: 0.9 },
+    { id: 'mid', x: 4.8, z: 0.9 },
   ],
 
   waves: [
-    { id: 'w1', triggerX: 1.6, enemies: [{ type: 'spider', x: 2.0, z: 0.4 }] },
-    { id: 'w2', triggerX: 4.0, enemies: [{ type: 'crawler', x: 4.8, z: -0.3 }, { type: 'spider', x: 5.4, z: 0.3 }] },
+    { id: 'w1', triggerX: 1.8, enemies: [{ type: 'spider', x: 2.8, z: 0.6 }, { type: 'crawler', x: 3.0, z: -0.6 }] },
+    { id: 'w2', triggerX: 5.0, enemies: [{ type: 'spider', x: 6.0, z: -0.5 }, { type: 'spider', x: 6.4, z: 0.6 }] },
   ],
 
   boss: null,
   quest: null,
-  lamps: [{ x: 5.2, z: -0.4 }, { x: 6.2, z: 0.4 }],
+  lamps: [{ x: 1.5, z: 0.0 }, { x: 4.5, z: 0.0 }, { x: 7.5, z: 0.0 }],
   gate: null,
-  exit: { x: 6.8, z: 0 },
+  exit: { x: 8.9, z: 0 },
 
   hints: [
-    { x: 0.0, text: 'Подвал. Темнее, чем ящик — свети внимательнее' },
-    { x: 1.1, text: 'Перегородки: проход то снизу, то сверху' },
-    { x: 4.3, text: 'Узкий проход. Враги впереди' },
+    { x: 0.0, text: 'Подвал. Враги-пауки быстрее ползунов' },
+    { x: 1.6, text: 'Перегородки: обходи их то снизу, то сверху' },
+    { x: 5.0, text: 'Пауки кусают вплотную. Бей светом издалека' },
   ],
 };
-

@@ -63,3 +63,40 @@ export function createWoodTexture(size = 512) {
   tex.anisotropy = 8;
   return tex;
 }
+
+/**
+ * Procedural stone texture for the basement: grey blocks with mortar lines and noise (no image files).
+ * @param {number} size canvas size in pixels
+ */
+export function createStoneTexture(size = 512) {
+  const c = document.createElement('canvas');
+  c.width = size;
+  c.height = size;
+  const g = c.getContext('2d');
+  g.fillStyle = '#4a4d55';
+  g.fillRect(0, 0, size, size);
+  // Blocks: 4 columns, 4 rows, each with a slightly different grey and mortar lines.
+  const cols = 4;
+  const rows = 4;
+  const bw = size / cols;
+  const bh = size / rows;
+  for (let r = 0; r < rows; r++) {
+    const offset = r % 2 ? bw / 2 : 0;
+    for (let k = -1; k < cols + 1; k++) {
+      const x = k * bw + offset;
+      const shade = 60 + Math.floor(Math.random() * 30);
+      g.fillStyle = `rgb(${shade},${shade + 2},${shade + 6})`;
+      g.fillRect(x + 3, r * bh + 3, bw - 6, bh - 6);
+    }
+  }
+  // Grain: small dark and light specks.
+  for (let i = 0; i < 2500; i++) {
+    const v = Math.random() < 0.5 ? 20 : 150;
+    g.fillStyle = `rgba(${v},${v},${v},0.08)`;
+    g.fillRect(Math.random() * size, Math.random() * size, 2, 2);
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  return tex;
+}

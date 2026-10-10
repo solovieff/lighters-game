@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { bus } from '../core/EventBus.js';
 import { BOSS } from '../core/config.js';
 import { buildWalls, buildProps, buildExit, buildPartitions } from './LevelBuilder.js';
+import { createStoneTexture } from '../assets/Textures.js';
 import { Pickup } from '../entities/Pickup.js';
 import { Level } from './Level.js';
 import { Checkpoint } from './Checkpoints.js';
@@ -30,7 +31,7 @@ export class BasementLevel extends Level {
     this.particles = particles;
     this.cri = spec.cri;
     this.root = new THREE.Group();
-    this.addWoodFloor();
+    this.addStoneFloor();
     scene.add(this.root);
 
     this.colliders = [];
@@ -64,9 +65,10 @@ export class BasementLevel extends Level {
     this.sparks = 0;
     this.respawnPoint = { x: data.start.x, z: data.start.z };
 
-    this.colliders.push(...buildWalls(this.root, data));
+    this.stoneMat = this.makeStoneMaterial();
+    this.colliders.push(...buildWalls(this.root, data, this.stoneMat));
     this.colliders.push(...buildProps(this.root, data.props));
-    this.colliders.push(...buildPartitions(this.root, data.partitions, data.wallHeight));
+    this.colliders.push(...buildPartitions(this.root, data.partitions, data.wallHeight, this.stoneMat));
     this.exit = buildExit(this.root, data.exit.x, 0, data.bounds.halfZ, null);   // the far door of the empty room
     // Lamps in the empty room: a small glowing shade and a weak warm light. Picture only (not in the lux readout).
     for (const L of data.lamps || []) {
@@ -188,7 +190,29 @@ export class BasementLevel extends Level {
   }
 
   /** Removes everything this level added to the scene. */
-  /** Wood floor of the drawer (lives in this level's group, so it is removed with the level). */
+  /** Stone material for the walls and partitions of the basement. */
+  makeStoneMaterial() {
+    const tex = createStoneTexture(512);
+    tex.repeat.set(4, 2);
+    return new THREE.MeshStandardMaterial({ map: tex, roughness: 0.95, metalness: 0.0 });
+  }
+
+  /** Stone floor of the basement (its own, not the drawer's wood). */
+  addStoneFloor() {
+    const tex = createStoneTexture(512);
+    tex.repeat.set(9, 3);
+    const b = this.data.bounds;
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(b.maxX - b.minX + 2, b.halfZ * 2 + 1),
+      new THREE.MeshStandardMaterial({ map: tex, roughness: 0.95, metalness: 0.0 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.set((b.minX + b.maxX) / 2, 0, 0);
+    floor.receiveShadow = true;
+    this.root.add(floor);
+  }
+
+  /** Wood floor of the drawer (not used by the basement). */
   addWoodFloor() {
     const woodTex = createWoodTexture(512);
     woodTex.repeat.set(8, 4);

@@ -47,8 +47,8 @@ function collider(cx, cy, cz, sx, sy, sz, metal) {
  * Internal partitions (walls inside the drawer): the paperclip maze and the rooms before the exit.
  * Each is an axis-aligned box {x0,x1,z0,z1} in metres, height `h` (default: the wall height).
  */
-export function buildPartitions(root, partitions, defaultH) {
-  const mat = getWoodMaterial();
+export function buildPartitions(root, partitions, defaultH, wallMat) {
+  const mat = wallMat || getWoodMaterial();
   const colliders = [];
   for (const p of partitions || []) {
     const h = p.h ?? defaultH;
@@ -83,11 +83,11 @@ function addMesh(root, geo, mat, x, y, z, rotX = 0) {
  * Walls of the drawer: two long sides and the left end. The right end is the exit (no collider).
  * @returns {AABB[]}
  */
-export function buildWalls(root, data) {
+export function buildWalls(root, data, wallMat) {
   const { minX, maxX, halfZ } = data.bounds;
   const h = data.wallHeight;
   const t = data.wallThickness;
-  const mat = getWoodMaterial();
+  const mat = wallMat || getWoodMaterial();
   const len = maxX - minX + 0.2;
   const cx = (minX + maxX) / 2;
   const colliders = [];
