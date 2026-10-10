@@ -233,6 +233,11 @@ const loop = new Loop(
       hero.update(dt, move, input.aimAxes(), level.colliders, jump);
       if (level.cameraFrame) level.cameraFrame(gfx.camera, hero.position);   // levels may frame their own view
       else rig.update(hero.position, dt, 0);
+      // Lux readers first (the range reads this frame's beam), then the level itself.
+      const dimNow = Math.pow(1 - MOTH_CLING_DIM, mothsClinging.length);
+      const axisNow = hero.beamTarget.clone().sub(hero.headWorld).normalize();
+      level.lux = luxFor(hero.headWorld, axisNow, power.cd * dimNow, power.lumens * dimNow);
+      level.worldLevel = worldLevel;
       level.update(dt, hero.position, power, gfx.camera);
       if (level.atExit(hero.position.x) && !victoryShown) {
         victoryShown = true;
@@ -326,8 +331,6 @@ const loop = new Loop(
       }
     }
 
-    level.lux = luxFor(origin, axis, beamCd, beamLumens);   // the range reads it; other levels ignore it
-    level.worldLevel = worldLevel;   // the range reads the outside-light level for its readout
     particles.update(dt);
     hud.update(dt, power);
     input.endFrame();
