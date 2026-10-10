@@ -103,7 +103,6 @@ export const WORLD_LIGHT = {
   levels: [
     { name: 'Темно', lux: 0 },
     { name: 'Сумерки', lux: 1 },
-    { name: 'Мягко', lux: 10 },
     { name: 'Светло', lux: 10000 },
   ],
   // Render intensity = sqrt(lux) * luxToRender. Set by screenshot: 0.2 makes 'Светло' (10 000 lx) read as day.
