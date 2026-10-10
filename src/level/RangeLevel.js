@@ -277,10 +277,9 @@ export class RangeLevel extends Level {
     });
   }
 
-  /** Outside light in lux for the current level: ambient intensity × luxPerUnit (a readout assumption). */
+  /** Outside light in real lux for the current level (from config, not from the picture). */
   outsideLux() {
-    const lv = WORLD_LIGHT.levels[this.worldLevel ?? WORLD_LIGHT.startLevel];
-    return WORLD_LIGHT.ambientBase * lv.mul * WORLD_LIGHT.luxPerUnit;
+    return WORLD_LIGHT.levels[this.worldLevel ?? WORLD_LIGHT.startLevel].lux;
   }
 
   /**

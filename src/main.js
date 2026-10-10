@@ -45,8 +45,10 @@ let worldLevel = WORLD_LIGHT.startLevel;
 function setWorldLight(index) {
   worldLevel = (index + WORLD_LIGHT.levels.length) % WORLD_LIGHT.levels.length;
   const lv = WORLD_LIGHT.levels[worldLevel];
-  worldAmbient.intensity = WORLD_LIGHT.ambientBase * lv.mul;
-  worldHemi.intensity = WORLD_LIGHT.hemiBase * lv.mul;
+  // Render intensity follows the real lux of the level through one fixed factor.
+  const render = Math.sqrt(lv.lux) * WORLD_LIGHT.luxToRender;   // sqrt: dusk and soft light stay visibly different
+  worldAmbient.intensity = render;
+  worldHemi.intensity = render;
   bus.emit('worldLight', { name: lv.name, index: worldLevel });
 }
 setWorldLight(worldLevel);

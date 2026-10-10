@@ -98,17 +98,18 @@ export const WORLD_LIGHT = {
   ambientColor: '#8090b8',
   hemiSky: '#5a6a98',
   hemiGround: '#202020',
-  // Levels cycled with L. mul multiplies ambientBase / hemiBase (0.02). Values picked by screenshot, not by formula.
+  // Levels cycled with L. lux is the REAL illuminance outside (typical values), shown in the labels.
+  // The render intensity is derived from lux by one fixed factor (luxToRender), so picture and readout agree.
   levels: [
-    { name: 'Темно', mul: 0 },
-    { name: 'Сумерки', mul: 120 },
-    { name: 'Мягко', mul: 300 },
-    { name: 'Светло', mul: 1250 },
+    { name: 'Темно', lux: 0 },
+    { name: 'Сумерки', lux: 1 },
+    { name: 'Мягко', lux: 10 },
+    { name: 'Светло', lux: 10000 },
   ],
-  ambientBase: 0.02,
-  hemiBase: 0.02,
+  // Render intensity = sqrt(lux) * luxToRender. Set by screenshot: 0.2 makes 'Светло' (10 000 lx) read as day.
+  // At real dusk and soft-moonlight levels (1 and 10 lx) the picture stays dark on purpose: that is the physics.
+  luxToRender: 0.2,
+  ambientBase: 1,
+  hemiBase: 1,
   startLevel: 0,
-  // ASSUMPTION (gameplay, not a measurement): ambient intensity -> lux at the object, for the readout only.
-  // 1 unit of ambient ≈ this many lux. Chosen so Светло gives a daylight-like value, Темно ≈ 0.
-  luxPerUnit: 20,
 };
