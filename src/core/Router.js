@@ -1,6 +1,6 @@
 // Tiny router: maps the URL path to a start target, so each mode has its own address.
 //   /            main menu (Уровень / Мастерская / Полигон, mouse or keyboard)
-//   /table       level "Ящик стола" (old address /level still works)
+//   /table       level "Ящик стола"
 //   /workshop    workshop (lights, purchases, mods)
 //   /range       test range (Полигон)
 //   /basement    level 2 "Подвал"
@@ -8,7 +8,6 @@
 export const ROUTES = {
   '/': 'menu',
   '/table': 'table',
-  '/level': 'table',   // old alias
   '/workshop': 'workshop',
   '/range': 'range',
   '/basement': 'basement',

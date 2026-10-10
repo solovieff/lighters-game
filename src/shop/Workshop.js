@@ -228,7 +228,7 @@ export class Workshop {
     if (!owned) {
       return `<button class="ws-btn" data-act="buy">Купить за ${f.price} Искр</button>`;
     }
-    if (active) return '<span class="ws-note">Сейчас в игре</span>';
+    if (active) return '<span class="ws-owned">Сейчас в игре</span>';
     return '<button class="ws-btn" data-act="select">Играть этим</button>';
   }
 
