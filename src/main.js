@@ -20,6 +20,7 @@ import { FLASHLIGHTS } from './data/flashlights.js';
 import { LEVEL_1 } from './data/levels.js';
 import { Level } from './level/Level.js';
 import { SaveSystem } from './shop/SaveSystem.js';
+import { Workshop } from './shop/Workshop.js';
 import { START_MODE_INDEX, MOTH_MAX_CLING, MOTH_CLING_DIM, MOTH_DARK_RESET_SEC, LEVEL } from './core/config.js';
 import { Particles } from './fx/Particles.js';
 import { Squad } from './ai/Squad.js';
@@ -84,13 +85,33 @@ console.log(`[check] ${spec.brand} ${spec.model}: режим ${check.mode}, ` +
 // Temporary start overlay: any key starts the game (no mouse).
 const overlay = document.createElement('div');
 overlay.id = 'menu-temp';
-overlay.textContent = 'Нажмите любую клавишу, чтобы начать';
+overlay.innerHTML = '<div>Нажмите любую клавишу, чтобы начать</div><div style="font-size:18px;margin-top:14px;color:#7d8694">W — Мастерская</div>';
 Object.assign(overlay.style, {
   position: 'fixed', inset: '0', display: 'flex', alignItems: 'center',
   justifyContent: 'center', color: '#c9b99a', font: '28px sans-serif',
   background: 'rgba(0,0,0,0.6)', userSelect: 'none',
 });
 document.body.appendChild(overlay);
+
+const workshopRoot = document.createElement('div');
+workshopRoot.id = 'workshop';
+Object.assign(workshopRoot.style, {
+  position: 'fixed', inset: '0', display: 'none', alignItems: 'center', justifyContent: 'center',
+  background: 'rgba(8,9,12,0.92)', color: '#ddd', font: '15px sans-serif', zIndex: '10',
+});
+document.body.appendChild(workshopRoot);
+const workshop = new Workshop(
+  workshopRoot,
+  (id) => console.log(`[workshop] в руке: ${id}`),
+  () => { workshop.close(); states.go(STATES.MENU); }
+);
+
+function openWorkshop() {
+  if (!states.is(STATES.MENU)) return;
+  states.go(STATES.WORKSHOP);
+  overlay.style.display = 'none';
+  workshop.open();
+}
 
 function startGame() {
   if (!states.is(STATES.MENU)) return;
@@ -118,7 +139,12 @@ bus.on('heroHit', ({ pct, source }) => console.log(`[hit] ${source}: −${pct}%`
 bus.on('enemyDied', ({ type }) => console.log(`[enemy] died: ${type}`));
 
 window.addEventListener('keydown', (e) => {
+  if (states.is(STATES.WORKSHOP)) {
+    if (e.code === 'Escape') { workshop.close(); overlay.style.display = 'flex'; states.go(STATES.MENU); }
+    return;
+  }
   if (e.code === 'KeyC' && states.is(STATES.PLAYING)) power.setCharge(100); // test helper
+  if (e.code === 'KeyW' && states.is(STATES.MENU)) { openWorkshop(); return; }
   startGame();
 });
 if (location.search.includes('play')) startGame();
