@@ -5,10 +5,11 @@ import { buildFlashlight } from '../assets/FlashlightModels.js';
 import { GRAVITY, AIM, HALO } from '../core/config.js';
 import { hopSpeed, jumpVelocity } from '../core/derived.js';
 import { FLASHLIGHTS } from '../data/flashlights.js';
-import { resolveBoxes } from '../physics/Physics.js';
 
 // Maximum lean angle toward the movement direction (rad), about 9 degrees.
 const MAX_LEAN = 0.16;
+const HOP_SEC = 0.35;        // s, duration of one hop
+const HOP_HEIGHT = 0.15;     // m, lift during a hop: clears props up to this height (pencil 0.14 m), not walls (0.20 m)
 const UP = new THREE.Vector3(0, 1, 0);
 
 export class FlashlightHero {
@@ -34,14 +35,14 @@ export class FlashlightHero {
     scene.add(this.pivot);
 
     this.position = new THREE.Vector3(0, 0, 0.6); // feet on the floor
-    this.velocity = new THREE.Vector3();
-    this.onGround = false;
     this.size = { hx: this.radiusM * 1.5, hz: this.radiusM * 1.5, h: this.lengthM };
 
     this.speed = hopSpeed(this.spec.massG);
     this.jumpV = jumpVelocity(this.spec.massG);
 
     this.hopPhase = 0;
+    this.hopT = 0;     // s left in the current hop
+    this.lift = 0;     // m, current lift above the table
     this.squash = 0;   // -1..1, negative = squashed on landing
 
     // Lean: smoothed tilt angle and the world direction it tilts toward.
@@ -78,52 +79,31 @@ export class FlashlightHero {
    */
   update(dt, move, aim, boxes, jumpPressed) {
     const moving = Math.hypot(move.x, move.z) > 0.01;
-    this.velocity.x = moving ? move.x * this.speed : 0;
-    this.velocity.z = moving ? move.z * this.speed : 0;
 
-    // Turn toward movement direction.
+    // Turn toward movement direction (arrows override it while held).
     if (moving && Math.abs(aim.x) === 0) {
       const targetHeading = Math.atan2(move.x, -move.z);
       this.heading += shortestAngle(this.heading, targetHeading) * Math.min(1, dt * 8);
     }
 
-    if (jumpPressed && this.onGround) {
-      this.velocity.y = this.jumpV;
-      this.onGround = false;
-      this.squash = 0.4;
-    }
+    // Flat movement on the table: the flashlight hangs at one level. Jump = a short hop that lifts it
+    // over low obstacles. There is no gravity or floor-stacking; walls and props stop it.
+    if (jumpPressed && this.hopT <= 0) this.hopT = HOP_SEC;
+    this.hopT = Math.max(0, this.hopT - dt);
+    const lifted = this.hopT > 0;
+    this.lift = lifted ? HOP_HEIGHT : 0;
 
-    this.velocity.y -= GRAVITY * dt;
-    this.position.x += (this.velocity.x + this.knock.x) * dt;
-    this.position.z += (this.velocity.z + this.knock.z) * dt;
-    this.position.y += this.velocity.y * dt;
+    const vx = (moving ? move.x * this.speed : 0) + this.knock.x;
+    const vz = (moving ? move.z * this.speed : 0) + this.knock.z;
+    this.moveAxis(vx * dt, 0, boxes);
+    this.moveAxis(0, vz * dt, boxes);
     this.knock.multiplyScalar(Math.max(0, 1 - dt * 8));
 
-    // Body and head together: repeat until neither the feet box nor the head tip overlaps a wall.
-    let res = { onGround: false, hitWall: false };
-    for (let pass = 0; pass < 4; pass++) {
-      const r = resolveBoxes(this.position, this.size, boxes);
-      res.onGround = res.onGround || r.onGround;
-      res.hitWall = res.hitWall || r.hitWall;
-      this.keepHeadOutOfWalls(boxes);
-    }
-    if (res.onGround) {
-      if (this.velocity.y < -1) this.squash = -0.5;
-      this.velocity.y = 0;
-      this.onGround = true;
-    }
-    if (this.position.y < 0) {
-      this.position.y = 0;
-      this.velocity.y = 0;
-      this.onGround = true;
-    }
-
-    this.updateLean(dt, moving, move);
+    // Hop bounce and squash for the visual only.
+    if (moving) this.hopPhase += dt * 9;
+    const hop = this.lift + (moving ? Math.abs(Math.sin(this.hopPhase)) * 0.01 : 0);
     this.squash += (0 - this.squash) * Math.min(1, dt * 8);
-
-    // Hop bounce while grounded and moving.
-    if (moving && this.onGround) this.hopPhase += dt * 9;
-    const hop = moving && this.onGround ? Math.abs(Math.sin(this.hopPhase)) * 0.02 : 0;
+    this.updateLean(dt, moving, move);
 
     // Arrows turn the whole flashlight: the body itself rotates, so the beam always comes from the head.
     // Free rotation in a full circle; heading is wrapped to [-π, π).
@@ -166,25 +146,27 @@ export class FlashlightHero {
   }
 
   /**
-   * The lying body sticks out in front of the feet. If the head tip ends up inside a wall, the hero is pushed
-   * back along the axis of the smallest penetration of the tip (out through the face it came in through).
+   * Moves the hero along one horizontal axis and stops it at walls/props. A hop lifts it over obstacles that
+   * are lower than HOP_HEIGHT; otherwise it is blocked.
+   * @param {number} dx displacement on X
+   * @param {number} dz displacement on Z
    */
-  keepHeadOutOfWalls(boxes) {
-    const L = this.lengthM;
+  moveAxis(dx, dz, boxes) {
+    this.position.x += dx;
+    this.position.z += dz;
     for (const b of boxes) {
-      if (this.position.y >= b.max.y || this.position.y + this.size.h <= b.min.y) continue;
-      const tip = { x: this.position.x + this.beamDir.x * L, z: this.position.z + this.beamDir.z * L };
-      if (!(tip.x > b.min.x && tip.x < b.max.x && tip.z > b.min.z && tip.z < b.max.z)) continue;
-      // Smallest move of the hero that takes the tip out of this box, on either horizontal axis.
-      const outX = Math.min(tip.x - b.min.x, b.max.x - tip.x);
-      const outZ = Math.min(tip.z - b.min.z, b.max.z - tip.z);
-      if (outX <= outZ) {
-        const sign = tip.x - b.min.x < b.max.x - tip.x ? -1 : 1;
-        this.position.x += sign * (outX + 1e-4);
-      } else {
-        const sign = tip.z - b.min.z < b.max.z - tip.z ? -1 : 1;
-        this.position.z += sign * (outZ + 1e-4);
-      }
+      const bottom = this.lift;
+      const top = this.lift + this.size.h;
+      if (top <= b.min.y || bottom >= b.max.y) continue;   // hero's height band misses the box
+      if (this.position.x + this.size.hx <= b.min.x || this.position.x - this.size.hx >= b.max.x) continue;
+      if (this.position.z + this.size.hz <= b.min.z || this.position.z - this.size.hz >= b.max.z) continue;
+      // Hero overlaps this box. Block the move on the axis that moved, unless a hop clears the box.
+      // A hop clears the box only if the hero's underside is above its top.
+      if (this.hopT > 0 && bottom >= b.max.y) continue;
+      if (dx !== 0) this.position.x -= dx;
+      if (dz !== 0) this.position.z -= dz;
+      this.knock.set(0, 0, 0);
+      return;
     }
   }
 
