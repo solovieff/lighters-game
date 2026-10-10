@@ -30,12 +30,14 @@ import { TouchControls } from './ui/TouchControls.js';
 import { Workshop } from './shop/Workshop.js';
 import { RangeLevel } from './level/RangeLevel.js';
 import { MainMenu } from './ui/MainMenu.js';
-import { START_MODE_INDEX, MOTH_MAX_CLING, MOTH_CLING_DIM, MOTH_DARK_RESET_SEC, LEVEL, WORLD_LIGHT } from './core/config.js';
+import { START_MODE_INDEX, MOTH_MAX_CLING, MOTH_CLING_DIM, MOTH_DARK_RESET_SEC, LEVEL, WORLD_LIGHT, CAMERA } from './core/config.js';
 import { Particles } from './fx/Particles.js';
 import { Squad } from './ai/Squad.js';
 import { HeroHealth } from './entities/HeroHealth.js';
 import { Projectile } from './entities/Projectile.js';
 
+// Phone in landscape: lower camera (CameraRig reads CAMERA.phone).
+CAMERA.phone = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches) && window.innerWidth > window.innerHeight;
 const gfx = new Renderer();
 const { scene } = gfx;
 const input = new Input();
