@@ -151,6 +151,7 @@ const CAMPAIGN = ['drawer', 'basement'];
 function runLevel(label, hint = LEVELS[label].hint) {
   const cfg = LEVELS[label];
   applyLoadout();                    // the flashlight chosen in the Workshop is the one in the level
+  hud.setFlashlight(`${spec.brand} ${spec.model}${spec.nickname ? ` «${spec.nickname}»` : ''}`);
   level.dispose();
   level = cfg.make();
   const start = level.respawnPoint;
@@ -246,6 +247,7 @@ function resetLevelStatus() {
 
 function startRange() {
   applyLoadout();                // the range uses the flashlight chosen in the Workshop too
+  hud.setFlashlight(`${spec.brand} ${spec.model}${spec.nickname ? ` «${spec.nickname}»` : ''}`);
   level.dispose();
   resetLevelStatus();
   // One start point for the hero and the range: the beam must land on the targets built from it.

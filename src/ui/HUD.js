@@ -87,6 +87,11 @@ export class HUD {
     for (const el of [this.panel, this.controls, this.hint, this.notice, this.bossBox]) el.style.display = d;
   }
 
+  /** Name of the flashlight in hand, shown at the top of the panel. */
+  setFlashlight(name) {
+    this.flashlightName = name;
+  }
+
   setLives(n) {
     this.lives = n;
   }
@@ -152,6 +157,7 @@ export class HUD {
     const throwText = p.cd > 0 ? `${Math.round(throwReal)} м (${throwGame.toFixed(1)} м)` : '—';
 
     this.panel.textContent =
+      `${this.flashlightName ? this.flashlightName + '\n' : ''}` +
       `Заряд:       ${p.charge.toFixed(0).padStart(3)} %  ${bar}${p.sagActive ? '  SAG' : ''}${p.lvpActive ? '  LVP' : ''}\n` +
       `Температура: ${p.tempC.toFixed(0)} °C  (лимит ${p.limitC} °C, Турбо до ${p.limitC - HEAT.turboRecoverMarginC} °C)\n` +
       `Режим:       ${modeLabel}  ${p.on ? '' : '[выкл]'}\n` +

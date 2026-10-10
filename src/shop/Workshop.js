@@ -49,6 +49,8 @@ const STYLE = `
   .ws-row .ws-price { font-size: 12px; color: #c9a27a; margin-top: 4px; }
   .ws-card { flex: 1; overflow-y: auto; padding: 22px 28px; }
   .ws-card-title { font-size: 26px; color: #ffe9c8; }
+  .ws-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 4px; }
+  .ws-card-action { flex-shrink: 0; padding-top: 4px; }
   .ws-role { font-size: 14px; color: #c9a27a; margin-top: 4px; margin-bottom: 16px; }
   .ws-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 22px; margin-bottom: 18px; }
   .ws-stat { border-left: 2px solid rgba(255,190,110,0.35); padding-left: 10px; }
@@ -191,8 +193,13 @@ export class Workshop {
     const title = f.nickname ? `${f.brand} ${f.model} «${f.nickname}»` : `${f.brand} ${f.model}`;
     const stat = (k, v, src) => `<div class="ws-stat"><div class="k">${k}</div><div class="v">${v} ${src ? tag(src) : ''}</div></div>`;
     card.innerHTML = `
-      <div class="ws-card-title">${title}</div>
-      <div class="ws-role">${f.role}</div>
+      <div class="ws-card-head">
+        <div>
+          <div class="ws-card-title">${title}</div>
+          <div class="ws-role">${f.role}</div>
+        </div>
+        <div class="ws-card-action">${this.actionButtons(f, owned, active)}</div>
+      </div>
       <div class="ws-stats">
         ${stat('Светодиод', f.emitter, f.criSource)}
         ${stat('CRI / CCT', `${f.cri} · ${f.cct} K`, f.criSource)}
@@ -208,7 +215,7 @@ export class Workshop {
       ${modeRows}
       <div class="ws-subtitle">Моды</div>
       ${modRows}
-      <div style="margin-top:18px">${this.actionButtons(f, owned, active)}</div>`;
+      `;
 
     card.querySelectorAll('[data-mod]').forEach((btn) => {
       btn.onclick = () => this.buyMod(btn.dataset.mod, Number(btn.dataset.price));
