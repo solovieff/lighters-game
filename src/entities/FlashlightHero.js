@@ -8,8 +8,8 @@ import { FLASHLIGHTS } from '../data/flashlights.js';
 
 // Maximum lean angle toward the movement direction (rad), about 9 degrees.
 const MAX_LEAN = 0.16;
-const HOP_SEC = 0.35;        // s, duration of one hop
-const HOP_HEIGHT = 0.15;     // m, lift during a hop: clears props up to this height (pencil 0.14 m), not walls (0.20 m)
+const HOP_SEC = 0.6;         // s, duration of one hop (long enough to fly over a pencil at walking speed)
+const HOP_HEIGHT = 0.18;     // m, peak lift of a hop: clears props up to 0.14 m (pencil), not walls (0.20 m)
 const UP = new THREE.Vector3(0, 1, 0);
 
 export class FlashlightHero {
@@ -41,7 +41,8 @@ export class FlashlightHero {
     this.jumpV = jumpVelocity(this.spec.massG);
 
     this.hopPhase = 0;
-    this.hopT = 0;     // s left in the current hop
+    this.hopT = 0;       // s left in the current hop
+    this.hopElapsed = 0; // s since the current hop started
     this.lift = 0;     // m, current lift above the table
     this.squash = 0;   // -1..1, negative = squashed on landing
 
@@ -88,10 +89,19 @@ export class FlashlightHero {
 
     // Flat movement on the table: the flashlight hangs at one level. Jump = a short hop that lifts it
     // over low obstacles. There is no gravity or floor-stacking; walls and props stop it.
-    if (jumpPressed && this.hopT <= 0) this.hopT = HOP_SEC;
-    this.hopT = Math.max(0, this.hopT - dt);
-    const lifted = this.hopT > 0;
-    this.lift = lifted ? HOP_HEIGHT : 0;
+    if (jumpPressed && this.hopT <= 0) {
+      this.hopT = HOP_SEC;
+      this.hopElapsed = 0;
+    }
+    if (this.hopT > 0) {
+      // Smooth arc: lift follows sin(π·progress), so it leaves and lands at zero with no step.
+      this.hopElapsed += dt;
+      this.hopT = Math.max(0, HOP_SEC - this.hopElapsed);
+      const p = Math.min(1, this.hopElapsed / HOP_SEC);
+      this.lift = HOP_HEIGHT * Math.sin(Math.PI * p);   // smooth arc from 0 up to the peak and back to 0
+    } else {
+      this.lift = 0;
+    }
 
     const vx = (moving ? move.x * this.speed : 0) + this.knock.x;
     const vz = (moving ? move.z * this.speed : 0) + this.knock.z;

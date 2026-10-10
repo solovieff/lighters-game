@@ -68,6 +68,8 @@ const health = new HeroHealth();
 
 const level = new Level(scene, LEVEL_1, particles, spec.cri);
 const boxes = level.colliders;
+// Walls and props of the current level. Empty in the test range (see rangeMode).
+const activeBoxes = () => (rangeMode ? [] : boxes);
 
 // Test dummies (photometry check from stage 4). Hidden on the level to keep the drawer clean.
 const dummies = [];
@@ -99,7 +101,7 @@ Object.assign(overlay.style, {
 document.body.appendChild(overlay);
 
 // Test range (T from the menu): targets at known distances along a lane in front of the hero.
-const range = new TestRange(scene, LEVEL_1.start.x + 0.2, LEVEL_1.start.z);
+const range = new TestRange(scene, { x: LEVEL_1.start.x + 0.2, z: LEVEL_1.start.z });
 range.root.visible = false;
 let rangeMode = false;
 
@@ -158,6 +160,7 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyT' && states.is(STATES.MENU)) {
     rangeMode = true;
     range.root.visible = true;
+    level.root.visible = false;   // range is its own level: no walls, props or enemies
     overlay.remove();
     states.go(STATES.PLAYING);
     hud.showHint('Полигон: светим вперёд, на мишенях — дальность и люкс');
@@ -213,7 +216,7 @@ const loop = new Loop(
 
     if (states.is(STATES.PLAYING)) {
       elapsed += dt;
-      hero.update(dt, input.moveAxes(), input.aimAxes(), boxes, input.wasPressed('Space'));
+      hero.update(dt, input.moveAxes(), input.aimAxes(), activeBoxes(), input.wasPressed('Space'));
       rig.update(hero.position, dt, 0);
       level.update(dt, hero.position, power);
       if (level.atExit(hero.position.x) && !victoryShown) {
@@ -247,7 +250,7 @@ const loop = new Loop(
     // Each clinging moth dims the emitted light by MOTH_CLING_DIM (battery drain is unchanged).
     const dim = Math.pow(1 - MOTH_CLING_DIM, mothsClinging.length);
     beamVis.update({
-      origin, target, lumens: power.lumens * dim, cd: power.cd * dim, cct: spec.cct, on: lit, boxes,
+      origin, target, lumens: power.lumens * dim, cd: power.cd * dim, cct: spec.cct, on: lit, boxes: activeBoxes(),
     });
 
     // Moths leave when the light has been off for MOTH_DARK_RESET_SEC.
@@ -277,7 +280,7 @@ const loop = new Loop(
       }
       const c = e.center;
       const lux = lit
-        ? luxOnTarget({ origin, axis, point: c, cd: beamCd, lumens: beamLumens, boxes })
+        ? luxOnTarget({ origin, axis, point: c, cd: beamCd, lumens: beamLumens, boxes: activeBoxes() })
         : 0;
       e.lastLux = lux;
       if (e.type !== 'moth') {

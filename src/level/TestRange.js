@@ -1,46 +1,50 @@
-// Test range: a long lane with targets at known distances. Each target shows its distance in game metres and
-// in real metres (ANSI FL1 scale), plus the illuminance the current beam delivers to it.
-// Used to check throw and hotspot of every flashlight against the official numbers.
+// Test range: a separate level with no walls, props or enemies. The hero shines straight ahead and every target
+// is placed at a known distance (game metres) in a fan, so no target blocks another.
+// Each target shows its game distance, the real distance (ANSI FL1 scale) and the lux the beam delivers.
 import * as THREE from 'three';
 import { RANGE_SCALE } from '../core/config.js';
 
+// Distances in game metres. Real range ~ up to 27 m (MS18), so the far end goes to 10 game m (500 real m).
 export const RANGE_DISTANCES_M = [0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0];
 
 export class TestRange {
   /**
    * @param {THREE.Scene} scene
-   * @param {number} startX where the lane begins (the hero stands here)
-   * @param {number} zLane lane centre on Z
+   * @param {{x:number,z:number}} heroStart where the hero stands
    */
-  constructor(scene, startX, zLane) {
+  constructor(scene, heroStart) {
     this.root = new THREE.Group();
     scene.add(this.root);
-    this.startX = startX;
-    this.zLane = zLane;
     this.targets = [];
+    this.heroStart = heroStart;
 
-    // Lane: a long low board so the beam has something to land on.
-    const lane = new THREE.Mesh(
-      new THREE.BoxGeometry(RANGE_DISTANCES_M[RANGE_DISTANCES_M.length - 1] + 2, 0.02, 0.6),
-      new THREE.MeshStandardMaterial({ color: '#3a2a1c', roughness: 0.8 })
+    // Floor for the range: plain dark board, enough to see the lit spot.
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(14, 14),
+      new THREE.MeshStandardMaterial({ color: '#2a2018', roughness: 0.85 })
     );
-    lane.position.set(startX + (RANGE_DISTANCES_M[RANGE_DISTANCES_M.length - 1] + 2) / 2 - 1, 0.01, zLane);
-    lane.receiveShadow = true;
-    this.root.add(lane);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.set(heroStart.x + 4, 0, heroStart.z);
+    floor.receiveShadow = true;
+    this.root.add(floor);
 
-    for (const d of RANGE_DISTANCES_M) {
-      // Target sits d game metres from the hero along the lane.
-      this.addTarget(startX + d, d);
-    }
+    // Fan of targets: each distance has its own bearing so they never stand in front of each other.
+    const n = RANGE_DISTANCES_M.length;
+    RANGE_DISTANCES_M.forEach((d, i) => {
+      const angle = ((i / (n - 1)) - 0.5) * 0.9; // spread from -0.45 to +0.45 rad
+      const x = heroStart.x + Math.cos(angle) * d;
+      const z = heroStart.z - Math.sin(angle) * d;
+      this.addTarget(x, z, d);
+    });
   }
 
-  /** A white card on a post, with a distance label handled by the caller (DOM). */
-  addTarget(x, gameM) {
+  /** A white card on a post, facing the hero. */
+  addTarget(x, z, gameM) {
     const post = new THREE.Mesh(
       new THREE.BoxGeometry(0.03, 0.12, 0.03),
       new THREE.MeshStandardMaterial({ color: '#555', roughness: 0.9 })
     );
-    post.position.set(x, 0.06, this.zLane);
+    post.position.set(x, 0.06, z);
     post.castShadow = true;
     this.root.add(post);
 
@@ -48,7 +52,8 @@ export class TestRange {
       new THREE.BoxGeometry(0.1, 0.1, 0.01),
       new THREE.MeshStandardMaterial({ color: '#e8e4d8', roughness: 0.7 })
     );
-    card.position.set(x, 0.12, this.zLane);
+    card.position.set(x, 0.14, z);
+    card.lookAt(this.heroStart.x, 0.14, this.heroStart.z);
     card.castShadow = true;
     this.root.add(card);
 
@@ -59,15 +64,15 @@ export class TestRange {
       padding: '2px 6px', borderRadius: '4px', whiteSpace: 'nowrap', display: 'none',
     });
     document.body.appendChild(label);
-    this.targets.push({
-      gameM, pos: new THREE.Vector3(x, 0.12, this.zLane), label, lux: 0,
-    });
+    this.targets.push({ gameM, pos: new THREE.Vector3(x, 0.14, z), label, lux: 0 });
   }
 
   /**
-   * Updates the labels: distance (game and real) and the lux the beam delivers.
+   * Updates the labels: game distance, real distance and the lux the beam delivers at each target.
    * @param {THREE.Camera} camera
-   * @param {(p: THREE.Vector3) => number} luxAt returns lux at a point (occlusion-aware)
+   * @param {(p: THREE.Vector3) => number} luxAt lux at a point (same formula as enemies)
+   * @param {number} width
+   * @param {number} height
    */
   update(camera, luxAt, width, height) {
     const v = new THREE.Vector3();
