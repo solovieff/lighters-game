@@ -144,6 +144,9 @@ function startRange() {
 
 function startGame() {
   if (!states.is(STATES.MENU)) return;
+  // The drawer starts with the beam pointing right (+X), the way the hero walks.
+  hero.heading = Math.PI / 2;
+  hero.aimYawOffset = 0;
   states.go(STATES.PLAYING);
   hud.showHint('Ящик стола. Пройди направо к выходу');
 }

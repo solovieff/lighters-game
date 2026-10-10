@@ -6,6 +6,7 @@ import { bus } from '../core/EventBus.js';
 const RUN_SPEED = 0.6;     // m/s, the mouse runs toward the pencil
 const EAT_SEC = 1.5;       // s, eating the pencil
 const LIGHT_SEC = 0.6;     // s the beam must stay on the corner before the mouse comes out
+const NOTICE_LUX = 1;      // lux on the corner that the mouse notices (a faint spill does not count)
 
 export class MouseQuest {
   /**
@@ -60,7 +61,7 @@ export class MouseQuest {
 
     if (this.state === 'wait') {
       // The corner must be lit for LIGHT_SEC before the mouse comes out.
-      this.lit = lux({ x: cx, y: 0.011, z: cz }) > 0 ? this.lit + dt : 0;   // lux takes a point, like the rest of the code
+      this.lit = lux({ x: cx, y: 0.011, z: cz }) >= NOTICE_LUX ? this.lit + dt : 0;   // real lux threshold, not just any light
       if (this.lit >= LIGHT_SEC) {
         this.state = 'run';
         this.group.visible = true;
