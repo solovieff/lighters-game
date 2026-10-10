@@ -4,7 +4,7 @@ import { createWoodTexture } from '../assets/Textures.js';
 import * as THREE from 'three';
 import { bus } from '../core/EventBus.js';
 import { BOSS } from '../core/config.js';
-import { buildWalls, buildProps, buildExit } from './LevelBuilder.js';
+import { buildWalls, buildProps, buildExit, buildPartitions } from './LevelBuilder.js';
 import { Pickup } from '../entities/Pickup.js';
 import { Level } from './Level.js';
 import { Checkpoint } from './Checkpoints.js';
@@ -62,7 +62,8 @@ export class TableLevel extends Level {
 
     this.colliders.push(...buildWalls(this.root, data));
     this.colliders.push(...buildProps(this.root, data.props));
-    this.exit = buildExit(this.root, data.exit.x, 0, data.bounds.halfZ);
+    this.colliders.push(...buildPartitions(this.root, data.partitions, data.wallHeight));
+    this.exit = buildExit(this.root, data.exit.x, 0, data.bounds.halfZ, data.exit.hole ? { z: data.exit.z } : null);
     for (const s of data.shards) this.pickups.push(new Pickup(this.root, s, this.cri));
     for (const c of data.checkpoints) this.checkpoints.push(new Checkpoint(this.root, c));
   }
@@ -131,9 +132,14 @@ export class TableLevel extends Level {
       }
     }
 
+    // Exit opens: with no boss, the hole opens when the beam lights its corner; a far-end exit opens at once.
     if (!this.data.boss && !this.bossDefeated) {
-      this.bossDefeated = true;   // no boss in this level: the exit opens from the start
-      this.exit.open();
+      const ex = this.data.exit;
+      const ready = ex.hole ? (this.lux && this.lux({ x: ex.openLightX, y: 0.011, z: ex.openLightZ }) >= 1) : true;
+      if (ready) {
+        this.bossDefeated = true;
+        this.exit.open();
+      }
     }
     if (this.boss && !this.boss.alive && !this.bossDefeated) {
       this.bossDefeated = true;
@@ -145,8 +151,13 @@ export class TableLevel extends Level {
   }
 
   /** True once the boss is down and the hero reaches the exit. */
-  atExit(heroX) {
-    return this.bossDefeated && heroX >= this.data.exit.x - 0.05;
+  atExit(heroX, heroZ = 0) {
+    if (!this.bossDefeated) return false;   // the exit is closed until its condition is met
+    if (this.data.exit.hole) {
+      // The hole in the corner: the hero must be in it (near its x and z), not just anywhere past the wall.
+      return heroX >= this.data.exit.x - 0.05 && Math.abs(heroZ - this.data.exit.z) < 0.2;
+    }
+    return heroX >= this.data.exit.x - 0.05;
   }
 
   /** Boss name and HP fraction for the boss bar, or null when there is no live boss. */

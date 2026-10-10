@@ -10,6 +10,16 @@ export const LEVEL_1 = {
   wallThickness: 0.04,
   start: { x: 0.0, z: 0.0 },
 
+  // Internal walls (x0,x1,z0,z1 in metres). The paperclip maze: three baffles that force a zigzag, then two rooms
+  // with a door before the exit corner. Nothing here can be skipped: the path runs through every gap.
+  partitions: [
+    { x0: 1.0, x1: 1.05, z0: -0.75, z1: 0.25 },   // maze baffle 1 (from the top wall), gap at the bottom
+    { x0: 1.5, x1: 1.55, z0: -0.25, z1: 0.75 },   // maze baffle 2 (from the bottom wall), gap at the top
+    { x0: 2.0, x1: 2.05, z0: -0.75, z1: 0.25 },   // maze baffle 3 (from the top wall), gap at the bottom
+    { x0: 2.9, x1: 2.95, z0: -0.75, z1: 0.2 },    // room wall with a door at the top
+    { x0: 2.9, x1: 2.95, z0: 0.4, z1: 0.75 },
+  ],
+
   // Props: pencils are logs across the lane, coins are stacked platforms, paper is a stack, ruler and clip are metal.
   props: [
     // A wooden crate across the whole lane (wall to wall): taller than one hop and as wide as the drawer, so it blocks the way.
@@ -51,8 +61,8 @@ export const LEVEL_1 = {
   // Mouse quest: shine into the left corner, a mouse runs out and eats the pencil.
   quest: { id: 'mouse', lightTargetX: -0.3, lightTargetZ: -0.6, mouseStart: { x: -0.4, z: -0.6 }, target: 'crate', targetX: 0.6, targetZ: 0.0 },
 
-  // Exit: at the far end of the drawer.
-  exit: { x: 3.95 },
+  // Exit: a hole in the top-right corner. The beam on that corner opens it, and the hero climbs out.
+  exit: { x: 3.95, z: 0.6, hole: true, openLightX: 3.7, openLightZ: 0.6 },   // the beam on the corner opens the hole
 
   // Tutorial hints, shown once each when the hero passes X.
   hints: [

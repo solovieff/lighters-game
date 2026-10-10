@@ -258,7 +258,7 @@ const loop = new Loop(
       beamVis.castsLight = level.usesHalo;   // the range does not light the scene (same rule as the halo)
       level.worldLevel = worldLevel;
       level.update(dt, hero.position, power, gfx.camera);
-      if (level.atExit(hero.position.x) && !victoryShown) {
+      if (level.atExit(hero.position.x, hero.position.z) && !victoryShown) {
         victoryShown = true;
         showVictory();
       }

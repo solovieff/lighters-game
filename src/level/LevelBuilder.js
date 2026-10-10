@@ -43,6 +43,25 @@ function collider(cx, cy, cz, sx, sy, sz, metal) {
   return box;
 }
 
+/**
+ * Internal partitions (walls inside the drawer): the paperclip maze and the rooms before the exit.
+ * Each is an axis-aligned box {x0,x1,z0,z1} in metres, height `h` (default: the wall height).
+ */
+export function buildPartitions(root, partitions, defaultH) {
+  const mat = getWoodMaterial();
+  const colliders = [];
+  for (const p of partitions || []) {
+    const h = p.h ?? defaultH;
+    const sx = p.x1 - p.x0;
+    const sz = p.z1 - p.z0;
+    const cx = (p.x0 + p.x1) / 2;
+    const cz = (p.z0 + p.z1) / 2;
+    addMesh(root, new THREE.BoxGeometry(sx, h, sz), mat, cx, h / 2, cz);
+    colliders.push(collider(cx, h / 2, cz, sx, h, sz, false));
+  }
+  return colliders;
+}
+
 /** Adds a mesh (shadow caster) to the root. */
 function addMesh(root, geo, mat, x, y, z, rotX = 0) {
   const mesh = new THREE.Mesh(geo, mat);
@@ -144,13 +163,16 @@ export function buildProps(root, props) {
  * Exit door on the far end of the drawer. Dark until opened, then it glows.
  * @returns {{ open(): void }}
  */
-export function buildExit(root, x, z, halfZ) {
+export function buildExit(root, x, z, halfZ, hole = null) {
   const mat = new THREE.MeshStandardMaterial({
     color: '#222222', emissive: '#ffd27a', emissiveIntensity: 0, roughness: 0.5,
   });
-  addMesh(root, new THREE.BoxGeometry(0.04, 0.2, halfZ * 2), mat, x, 0.1, z);
+  // Far-end door (no hole): a thin glowing panel along the end wall.
+  if (!hole) addMesh(root, new THREE.BoxGeometry(0.04, 0.2, halfZ * 2), mat, x, 0.1, z);
+  // Hole in the wall: a dark gap at the given z; it glows once open.
+  else addMesh(root, new THREE.BoxGeometry(0.04, 0.2, 0.3), mat, x, 0.1, hole.z);
   const glow = new THREE.PointLight('#ffd27a', 0, 0.8, 2);
-  glow.position.set(x - 0.05, 0.12, z);
+  glow.position.set(x - 0.05, 0.12, hole ? hole.z : z);
   root.add(glow);
   return {
     open() {
