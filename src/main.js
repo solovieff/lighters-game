@@ -245,6 +245,7 @@ function resetLevelStatus() {
 }
 
 function startRange() {
+  applyLoadout();                // the range uses the flashlight chosen in the Workshop too
   level.dispose();
   resetLevelStatus();
   // One start point for the hero and the range: the beam must land on the targets built from it.
