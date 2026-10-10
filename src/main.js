@@ -85,13 +85,13 @@ const dummies = [
 
 // Enemies: one of each type for testing, placed a few metres from the start.
 const enemies = [
-  new Crawler(scene, -1.2, 1.0, particles),
-  new Swarm(scene, 1.5, 0.5, particles, 0, 3),
-  new Swarm(scene, 1.6, 0.8, particles, 1, 3),
-  new Swarm(scene, 1.4, 0.2, particles, 2, 3),
-  new Moth(scene, 0.4, -0.6, particles),
+  new Crawler(scene, 0.0, -0.9, particles),
+  new Swarm(scene, 0.25, -0.75, particles, 0, 3),
+  new Swarm(scene, -0.2, -0.95, particles, 1, 3),
+  new Swarm(scene, 0.05, -1.1, particles, 2, 3),
+  new Moth(scene, 0.0, -0.7, particles),
   new Watcher(scene, 0.0, -6.0, particles),
-  new Invisible(scene, -1.8, -1.5, particles),
+  new Invisible(scene, 0.0, -1.3, particles),
 ];
 const projectiles = [];
 const mothsClinging = [];
@@ -152,6 +152,7 @@ function spawnProjectile(from, dir, pct) {
 }
 
 let elapsed = 0;
+let logTimer = 0;
 
 const loop = new Loop(
   (dt) => {
@@ -239,6 +240,13 @@ const loop = new Loop(
       if (!projectiles[i].alive) projectiles.splice(i, 1);
     }
 
+    logTimer += dt;
+    if (logTimer >= 1) {
+      logTimer = 0;
+      for (const e of enemies) {
+        if (e.alive && e.lastLux > 0) console.log(`[dmg] ${e.name}: ${e.lastLux.toFixed(2)} лк, hp ${e.hp.toFixed(1)}`);
+      }
+    }
     particles.update(dt);
     hud.update(dt, power);
     input.endFrame();

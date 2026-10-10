@@ -33,7 +33,7 @@ export const AIM = {
   pitchSpeed: 1.2,      // rad/s when holding Up/Down: beam rises and falls, full range
   pitchMin: -1.4,       // rad, lowest beam angle (about -80°, almost straight down)
   pitchMax: 1.4,        // rad, highest beam angle (about +80°, almost straight up)
-  pitchDefault: -0.25,  // rad, starts slightly downward so the floor is lit
+  pitchDefault: -0.6,   // rad (about -34°), starts pointing down so the beam lights the floor where shadows crawl
 };
 
 // Faint glow around the hero so the world is never pitch black (LED spill, not a world light).
