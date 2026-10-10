@@ -39,6 +39,8 @@ export class HUD {
     });
     this.controls.textContent =
       'WASD ходьба · Пробел прыжок · стрелки луч · Q/E режим · L внешний свет · M музыка · C заряд (тест) · Esc пауза';
+    // Keyboard hints mean nothing on a phone: the list is hidden on touch devices.
+    if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) this.controls.style.display = 'none';
 
     this.bossBox = makeBlock({
       left: '50%', top: '10px', transform: 'translateX(-50%)', width: '420px', display: 'none',

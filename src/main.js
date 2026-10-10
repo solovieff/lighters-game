@@ -25,6 +25,7 @@ import { TableLevel } from './level/TableLevel.js';
 import { SaveSystem } from './shop/SaveSystem.js';
 import { FinalDialog } from './ui/FinalDialog.js';
 import { Music } from './audio/Music.js';
+import { TouchLayer } from './ui/TouchLayer.js';
 import { Workshop } from './shop/Workshop.js';
 import { RangeLevel } from './level/RangeLevel.js';
 import { MainMenu } from './ui/MainMenu.js';
@@ -297,6 +298,16 @@ window.__lumen = {
   warp: (x) => { hero.position.set(x, 0, 0); },
   victoryNow: () => { if (!victoryShown) { victoryShown = true; showVictory(); } },
 };
+
+// Phones: a «Меню» button (there is no Esc on a touch screen) and a «переверни экран» notice in portrait.
+// In portrait the game pauses; turning the phone back resumes it.
+const touchLayer = new TouchLayer(() => backToMenu());
+touchLayer.refresh();
+window.addEventListener('resize', () => {
+  touchLayer.refresh();
+  if (touchLayer.isBlockedByPortrait() && states.is(STATES.PLAYING)) states.go(STATES.PAUSED);
+  else if (!touchLayer.isBlockedByPortrait() && states.is(STATES.PAUSED) && touchLayer.touch) states.go(STATES.PLAYING);
+});
 
 // Music: starts on the first key press (browsers allow sound only after a user gesture). M toggles it.
 const music = new Music();
