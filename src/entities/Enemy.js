@@ -23,6 +23,11 @@ function buildSmoke(data) {
     e.position.set(sx * r * 0.25, r * 1.0, r * 0.5);
     g.add(e);
   }
+  // A faint glow of its own in the eye colour: so the monster can be seen in the dark drawer during a fight.
+  // It is not part of the flashlight readout (the beam lux is computed separately).
+  const eyeGlow = new THREE.PointLight(data.eyeColor, 0.15, 0.35, 2);
+  eyeGlow.position.set(0, r * 1.0, r * 0.5);
+  g.add(eyeGlow);
   g.userData.mat = mat;
   return g;
 }
