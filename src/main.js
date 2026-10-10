@@ -10,7 +10,7 @@ import { StateManager, STATES } from './core/StateManager.js';
 import { bus } from './core/EventBus.js';
 import { Input } from './input/Input.js';
 import { FlashlightHero } from './entities/FlashlightHero.js';
-import { resolveRoute, navigate } from './core/Router.js';
+import { resolveRoute, navigate, withBase } from './core/Router.js';
 import { Dummy } from './entities/Dummy.js';
 import { PowerSystem } from './light/PowerSystem.js';
 import { BeamVisual } from './light/BeamVisual.js';
@@ -272,7 +272,7 @@ function backToMenu() {
   hero.position.set(LEVEL_1.start.x, 0, LEVEL_1.start.z);
   states.go(STATES.MENU);
   hud.setHidden(true);
-  history.pushState({}, '', '/');
+  history.pushState({}, '', withBase('/'));
   menu.show();
 }
 

@@ -15,7 +15,7 @@ export const ROUTES = {
 
 /** Resolves the current URL to a target name. Unknown paths go to the menu. */
 export function resolveRoute(loc = window.location) {
-  const path = loc.pathname.replace(/\/+$/, '') || '/';
+  const path = stripBase(loc.pathname).replace(/\/+$/, '') || '/';
   if (ROUTES[path]) return ROUTES[path];
   // legacy query flags
   if (loc.search.includes('range')) return 'range';
@@ -25,6 +25,21 @@ export function resolveRoute(loc = window.location) {
 
 /** Changes the address without reloading, so back/forward and reload keep the mode. */
 export function navigate(target) {
-  const path = Object.keys(ROUTES).find((k) => ROUTES[k] === target) || '/';
-  if (window.location.pathname !== path) window.history.pushState({}, '', path);
+  const route = Object.keys(ROUTES).find((k) => ROUTES[k] === target) || '/';
+  const url = withBase(route);
+  if (window.location.pathname !== url) window.history.pushState({}, '', url);
+}
+
+/** The site root as Vite knows it: '/' locally, '/lighters-game/' on GitHub Pages. No trailing slash. */
+const BASE = import.meta.env.BASE_URL.replace(/\/+$/, '');
+
+/** Route path → real address on this host (keeps the Pages sub-path). */
+export function withBase(route) {
+  return route === '/' ? (BASE + '/') : BASE + route;
+}
+
+/** Real address → route path (drops the base, so '/lighters-game/basement' is '/basement'). */
+export function stripBase(pathname) {
+  if (BASE && pathname.startsWith(BASE)) return pathname.slice(BASE.length) || '/';
+  return pathname;
 }
