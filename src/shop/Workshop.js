@@ -30,6 +30,15 @@ const STYLE = `
   .ws-sparks { font-size: 15px; color: #c9a27a; }
   .ws-body { flex: 1; display: flex; min-height: 0; }
   .ws-list { width: 360px; overflow-y: auto; padding: 14px; border-right: 1px solid rgba(255,255,255,0.06); }
+  /* Phones: the list and the card stack vertically, the whole screen scrolls, nothing is squeezed. */
+  @media (max-width: 720px) {
+    .workshop { width: 100vw; height: 100vh; border-radius: 0; border: none; }
+    .ws-body { flex-direction: column; overflow-y: auto; }
+    .ws-list { width: auto; max-height: 40vh; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .ws-card { overflow: visible; padding: 16px 18px; }
+    .ws-stats { grid-template-columns: 1fr; }
+    .ws-title { font-size: 22px; }
+  }
   .ws-row { padding: 12px 14px; margin-bottom: 8px; border-radius: 10px; cursor: pointer;
     border: 1px solid rgba(255,255,255,0.07); background: rgba(255,255,255,0.02); transition: all .15s ease; }
   .ws-row:hover { background: rgba(255,255,255,0.05); }
