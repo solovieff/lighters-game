@@ -1,3 +1,4 @@
+import { createWoodTexture } from '../assets/Textures.js';
 // Table level "Ящик стола": builds the drawer from data, spawns waves and the boss,
 // tracks Sparks, checkpoints, hints and the exit. Extends the base Level; the flashlight spec comes from outside.
 import * as THREE from 'three';
@@ -25,6 +26,7 @@ export class TableLevel extends Level {
     this.particles = particles;
     this.cri = spec.cri;
     this.root = new THREE.Group();
+    this.addWoodFloor();
     scene.add(this.root);
 
     this.colliders = [];
@@ -129,6 +131,21 @@ export class TableLevel extends Level {
   }
 
   /** Removes everything this level added to the scene. */
+  /** Wood floor of the drawer (lives in this level's group, so it is removed with the level). */
+  addWoodFloor() {
+    const woodTex = createWoodTexture(512);
+    woodTex.repeat.set(8, 4);
+    const b = this.data.bounds;
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(b.maxX - b.minX + 2, b.halfZ * 2 + 1),
+      new THREE.MeshStandardMaterial({ map: woodTex, roughness: 0.6, metalness: 0.0 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.set((b.minX + b.maxX) / 2, 0, 0);
+    floor.receiveShadow = true;
+    this.root.add(floor);
+  }
+
   dispose() {
     for (const e of this.enemies) this.scene.remove(e.group);
     this.scene.remove(this.root);

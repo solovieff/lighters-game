@@ -17,7 +17,7 @@ const OBJECTS = [
   { name: 'Конь',       realM: 30,  angleDeg: 0,    labelH: 0.5, build: 'horse' },
   { name: 'Волк',       realM: 50,  angleDeg: 110,  labelH: 0.2, build: 'wolf' },
   { name: 'Автомобиль', realM: 100, angleDeg: -70,  labelH: 0.3, build: 'car' },
-  { name: 'Дом',        realM: 150, angleDeg: -35,  labelH: 0.8, build: 'house' },
+  { name: 'Дом',        realM: 150, angleDeg: -35,  labelH: 0.55, build: 'house' },
 ];
 const FOREST = { name: 'Край леса', realM: 200, fromDeg: 150, toDeg: 230 };
 
@@ -28,6 +28,37 @@ function seeded(seed) {
     s = (s * 16807) % 2147483647;
     return s / 2147483647;
   };
+}
+
+/** Procedural grass: a green base with noise and short blades, tiled. */
+function createGrassTexture(size = 512) {
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#2d5a2a';
+  ctx.fillRect(0, 0, size, size);
+  // Mottled base colour.
+  for (let i = 0; i < 2500; i++) {
+    const v = 0.7 + Math.random() * 0.6;
+    ctx.fillStyle = `rgba(${Math.round(45 * v)}, ${Math.round(90 * v)}, ${Math.round(40 * v)}, 0.35)`;
+    ctx.fillRect(Math.random() * size, Math.random() * size, 3 + Math.random() * 5, 3 + Math.random() * 5);
+  }
+  // Short blades in lighter and darker greens.
+  for (let i = 0; i < 1400; i++) {
+    const x = Math.random() * size;
+    const y = Math.random() * size;
+    const lean = (Math.random() - 0.5) * 4;
+    ctx.strokeStyle = Math.random() < 0.5 ? '#4f8a3c' : '#1f4420';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + lean, y - 5 - Math.random() * 4);
+    ctx.stroke();
+  }
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
 }
 
 /** Brightness indicator colour: dark grey when nothing reaches the target, warm white when it is bright. */
@@ -136,9 +167,11 @@ export class RangeLevel extends Level {
     this.lux = () => 0;   // (point) => lux, set by main.js each frame
 
     // Floor: plain dark board, big enough for the whole circle.
+    const grassTex = createGrassTexture(512);
+    grassTex.repeat.set(16, 16);
     const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(16, 16),
-      new THREE.MeshStandardMaterial({ color: '#2a2018', roughness: 0.85 })
+      new THREE.PlaneGeometry(40, 40),   // wide enough that the edge never shows, even at 200 m
+      new THREE.MeshStandardMaterial({ map: grassTex, roughness: 0.95, metalness: 0 })
     );
     floor.rotation.x = -Math.PI / 2;
     floor.position.set(heroStart.x, 0, heroStart.z);

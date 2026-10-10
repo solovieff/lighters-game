@@ -50,18 +50,7 @@ function setWorldLight(index) {
 }
 setWorldLight(worldLevel);
 
-// Drawer floor (wood).
-import { createWoodTexture } from './assets/Textures.js';
-const woodTex = createWoodTexture(512);
-woodTex.repeat.set(8, 4);
-const floor = new THREE.Mesh(
-  new THREE.PlaneGeometry(LEVEL_1.bounds.maxX - LEVEL_1.bounds.minX + 2, LEVEL_1.bounds.halfZ * 2 + 1),
-  new THREE.MeshStandardMaterial({ map: woodTex, roughness: 0.6, metalness: 0.0 })
-);
-floor.rotation.x = -Math.PI / 2;
-floor.position.set((LEVEL_1.bounds.minX + LEVEL_1.bounds.maxX) / 2, 0, 0);
-floor.receiveShadow = true;
-scene.add(floor);
+// The drawer floor (wood) belongs to TableLevel, so it is removed with the level.
 
 // Hero and light systems.
 // The flashlight the player chose in the Workshop, with its installed mods applied (copy, specs untouched).
