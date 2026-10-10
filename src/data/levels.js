@@ -87,3 +87,61 @@ export const LEVEL_1 = {
     { x: 2.45, text: 'Клякса: бей ядро узким лучом. Турбо — Q до 100 %' },
   ],
 };
+
+// Level 2 "Подвал". Same layout rules as the drawer: metres, walk along +X from the start to the exit.
+// No mouse quest here (its mechanic is not designed yet). Each path is forced through the internal walls.
+export const LEVEL_2 = {
+  id: 'basement',
+  name: 'Подвал',
+  subtitle: 'Уровень 2',
+  bounds: { minX: -0.5, maxX: 7.0, halfZ: 0.75 },
+  wallHeight: 0.2,
+  wallThickness: 0.04,
+  start: { x: 0.0, z: 0.0 },
+
+  // Internal walls: three staggered baffles, then a narrow passage ending at the exit.
+  partitions: [
+    { x0: 1.2, x1: 1.25, z0: -0.75, z1: 0.2 },   // baffle 1, gap at the bottom
+    { x0: 2.2, x1: 2.25, z0: -0.2, z1: 0.75 },   // baffle 2, gap at the top
+    { x0: 3.2, x1: 3.25, z0: -0.75, z1: 0.2 },   // baffle 3, gap at the bottom
+    { x0: 4.4, x1: 4.45, z0: -0.75, z1: -0.2 },  // narrow passage: two stubs with a gap in the middle
+    { x0: 4.4, x1: 4.45, z0: 0.2, z1: 0.75 },
+  ],
+
+  props: [
+    { kind: 'paper', x: 0.7, z: 0.3 },
+    { kind: 'coin', x: 1.7, z: -0.3, count: 2 },
+    { kind: 'ruler', x: 2.7, z: 0.4 },
+    { kind: 'clip', x: 3.7, z: -0.4 },
+  ],
+
+  shards: [
+    { x: 0.5, z: -0.5, value: 20 },
+    { x: 1.7, z: 0.5, value: 15 },
+    { x: 2.7, z: -0.5, value: 15 },
+    { x: 3.9, z: 0.4, value: 25 },
+  ],
+
+  checkpoints: [
+    { id: 'start', x: 0.0, z: 0.5 },
+    { id: 'mid', x: 2.7, z: 0.5 },
+  ],
+
+  waves: [
+    { id: 'w1', triggerX: 1.6, enemies: [{ type: 'crawler', x: 2.0, z: 0.4 }] },
+    { id: 'w2', triggerX: 4.0, enemies: [{ type: 'crawler', x: 4.8, z: -0.3 }, { type: 'swarm', x: 5.4, z: 0.3 }] },
+  ],
+
+  boss: null,
+  quest: null,
+  lamps: [{ x: 5.2, z: -0.4 }, { x: 6.2, z: 0.4 }],
+  gate: null,
+  exit: { x: 6.8, z: 0 },
+
+  hints: [
+    { x: 0.0, text: 'Подвал. Темнее, чем ящик — свети внимательнее' },
+    { x: 1.1, text: 'Перегородки: проход то снизу, то сверху' },
+    { x: 4.3, text: 'Узкий проход. Враги впереди' },
+  ],
+};
+

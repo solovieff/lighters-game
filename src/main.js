@@ -19,7 +19,7 @@ import { luxOnTarget, dpsFromLux } from './light/LightDamage.js';
 import { cdAtAngle } from './light/BeamModel.js';
 import { HUD } from './ui/HUD.js';
 import { effectiveSpec } from './data/effects.js';
-import { LEVEL_1 } from './data/levels.js';
+import { LEVEL_1, LEVEL_2 } from './data/levels.js';
 import { TableLevel } from './level/TableLevel.js';
 import { SaveSystem } from './shop/SaveSystem.js';
 import { Workshop } from './shop/Workshop.js';
@@ -109,8 +109,9 @@ document.body.appendChild(menuRoot);
 const menu = new MainMenu(menuRoot, (choice) => {
   hud.setHidden(false);
   // Each choice gets its own address, so reload and back/forward keep the mode.
-  navigate(choice === 'level' ? 'level' : choice);
+  navigate(choice);
   if (choice === 'level') startGame();
+  else if (choice === 'basement') startBasement();
   else if (choice === 'range') startRange();
   else if (choice === 'workshop') openWorkshop();
 });
@@ -169,9 +170,25 @@ function restartFirstLevel() {
   hud.showHint('Жизни закончились. Начинаем с первого уровня');
 }
 
+/** Starts a level from its data. Each level has its own battery, lives and start point. */
+function startLevelData(data, hint) {
+  level.dispose();
+  level = new TableLevel(scene, data, spec, particles);
+  hero.position.set(data.start.x, 0, data.start.z);
+  hero.heading = Math.PI / 2;
+  hero.aimYawOffset = 0;
+  resetLevelStatus();
+  states.go(STATES.PLAYING);
+  hud.showHint(hint);
+}
+
+function startBasement() {
+  if (!states.is(STATES.MENU)) return;
+  startLevelData(LEVEL_2, 'Подвал. Пройди направо к выходу');
+}
+
 function startGame() {
   if (!states.is(STATES.MENU)) return;
-  resetLevelStatus();
   // The drawer starts with the beam pointing right (+X), the way the hero walks.
   hero.heading = Math.PI / 2;
   hero.aimYawOffset = 0;
@@ -227,6 +244,7 @@ window.addEventListener('keydown', (e) => {
 const route = resolveRoute();
 if (route === 'range') { hud.setHidden(false); startRange(); }
 else if (route === 'level') startGame();
+else if (route === 'basement') startBasement();
 else if (route === 'workshop') openWorkshop();
 else menu.show();
 // Hide the in-game HUD while the menu is on screen.

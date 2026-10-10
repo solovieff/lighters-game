@@ -3,12 +3,14 @@
 //   /level       level "Ящик стола"
 //   /workshop    workshop (lights, purchases, mods)
 //   /range       test range (Полигон)
+//   /basement    level 2 "Подвал"
 // Old query flags (?range, ?play) still work for quick checks.
 export const ROUTES = {
   '/': 'menu',
   '/level': 'level',
   '/workshop': 'workshop',
   '/range': 'range',
+  '/basement': 'basement',
 };
 
 /** Resolves the current URL to a target name. Unknown paths go to the menu. */
