@@ -67,7 +67,7 @@ export const RENDER = {
 };
 
 // Enemy damage and combat timing.
-export const DAMAGE_K = 10;        // %/s per decade above threshold: dps = DAMAGE_K * log10(E / threshold)
+export const DAMAGE_K = 30;        // %/s per decade above threshold: dps = DAMAGE_K * log10(E / threshold)
 export const INVULN_SEC = 0.8;     // hero invulnerability after a hit
 export const KNOCKBACK_M = 0.25;   // hero push-back distance on a hit (m)
 export const EVAP_SEC = 0.8;       // evaporation time of a killed shadow
