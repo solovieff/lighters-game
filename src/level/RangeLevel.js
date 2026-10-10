@@ -289,23 +289,20 @@ export class RangeLevel extends Level {
   objectSamples(group) {
     const box = new THREE.Box3().setFromObject(group);
     const pts = [];
-    for (const fx of [0, 0.5, 1]) {
-      for (const fy of [0.1, 0.5, 0.9]) {
-        for (const fz of [0, 0.5, 1]) {
+    // Fine grid over the whole bounding box at several heights, so no lit spot is skipped as the beam moves.
+    const N = 6;
+    for (let i = 0; i <= N; i++) {
+      for (let j = 0; j <= 3; j++) {
+        for (let k = 0; k <= N; k++) {
           pts.push(new THREE.Vector3(
-            box.min.x + (box.max.x - box.min.x) * fx,
-            box.min.y + (box.max.y - box.min.y) * fy + 0.011,
-            box.min.z + (box.max.z - box.min.z) * fz,
+            box.min.x + (box.max.x - box.min.x) * (i / N),
+            box.min.y + (box.max.y - box.min.y) * (j / 3) + 0.011,
+            box.min.z + (box.max.z - box.min.z) * (k / N),
           ));
         }
       }
     }
     return pts;
-  }
-
-  /** No halo on the range: it would light objects outside the beam and spoil the lux readout. */
-  get usesHalo() {
-    return false;
   }
 
   /** Same contract as Level. The range is a shooting bench: the hero only turns the beam. */
@@ -318,7 +315,7 @@ export class RangeLevel extends Level {
     const height = window.innerHeight;
     const v = new THREE.Vector3();
     for (const t of this.targets) {
-      t.lux = Math.max(...t.samples.map((p) => this.lux(p)));   // lit face of the object counts
+      t.lux = Math.max(...t.samples.map((p) => this.lux(p)));   // brightest surface point the beam reaches
       v.copy(t.anchor).project(camera);
       const on = v.z < 1 && Math.abs(v.x) < 1.1 && Math.abs(v.y) < 1.1;
       t.label.style.display = on ? 'block' : 'none';
