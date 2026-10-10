@@ -71,7 +71,9 @@ export class Enemy {
 
   /** Visual center of the body (used as the light target). */
   get center() {
-    return new THREE.Vector3(this.pos.x, this.pos.y + this.data.size * 1.2, this.pos.z);
+    // The point the beam aims at: low on the body, near the beam height of a table-level flashlight (~1 cm).
+    // Higher points sit off the narrow hotspot and get almost no light, so the enemy would not take damage.
+    return new THREE.Vector3(this.pos.x, this.pos.y + this.data.size * 0.25, this.pos.z);
   }
 
   /** Horizontal distance to a point. */
