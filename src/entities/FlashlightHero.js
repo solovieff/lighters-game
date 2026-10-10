@@ -7,6 +7,10 @@ import { hopSpeed, jumpVelocity } from '../core/derived.js';
 import { FLASHLIGHTS } from '../data/flashlights.js';
 import { resolveBoxes } from '../physics/Physics.js';
 
+// Maximum lean angle toward the movement direction (rad), about 9 degrees.
+const MAX_LEAN = 0.16;
+const UP = new THREE.Vector3(0, 1, 0);
+
 export class FlashlightHero {
   /**
    * @param {THREE.Scene} scene
@@ -33,7 +37,10 @@ export class FlashlightHero {
 
     this.hopPhase = 0;
     this.squash = 0;   // -1..1, negative = squashed on landing
-    this.lean = 0;     // radians, toward movement
+
+    // Lean: smoothed tilt angle and the world direction it tilts toward.
+    this.leanAmount = 0;
+    this.leanDir = new THREE.Vector3(0, 0, 1);
 
     // Facing = direction the hero moves toward. Forward vector = (sin h, 0, -cos h).
     this.heading = 0;
@@ -48,6 +55,9 @@ export class FlashlightHero {
     // Derived each frame.
     this.headWorld = new THREE.Vector3();
     this.beamTarget = new THREE.Vector3();
+
+    this.qHeading = new THREE.Quaternion();
+    this.qLean = new THREE.Quaternion();
   }
 
   /**
@@ -92,9 +102,7 @@ export class FlashlightHero {
       this.onGround = true;
     }
 
-    // Lean and springy squash/stretch.
-    const targetLean = moving ? -move.z * 0.12 : 0;
-    this.lean += (targetLean - this.lean) * Math.min(1, dt * 10);
+    this.updateLean(dt, moving, move);
     this.squash += (0 - this.squash) * Math.min(1, dt * 8);
 
     // Hop bounce while grounded and moving.
@@ -109,10 +117,13 @@ export class FlashlightHero {
       this.aimReach - aim.y * AIM.reachSpeed * dt, AIM.reachMin, AIM.reachMax
     );
 
-    // Apply to visuals.
+    // Apply to visuals: heading first, then lean in world space (works for any direction).
     this.pivot.position.copy(this.position);
     this.pivot.position.y += hop;
-    this.pivot.rotation.set(this.lean, this.heading, 0, 'YXZ');
+    this.qHeading.setFromAxisAngle(UP, this.heading);
+    this.qLean.setFromUnitVectors(UP, this.leanTiltVector());
+    this.pivot.quaternion.copy(this.qLean).multiply(this.qHeading);
+
     const sy = 1 + this.squash * 0.15;
     const sxz = 1 - this.squash * 0.07;
     this.model.scale.set(sxz, sy, sxz);
@@ -127,6 +138,30 @@ export class FlashlightHero {
     );
 
     this.halo.position.set(this.position.x, this.position.y + this.lengthM * 0.6, this.position.z);
+  }
+
+  /**
+   * Smooths the lean amount and direction toward the current movement.
+   * Lean goes toward the movement in any direction: sideways, forward, diagonal.
+   */
+  updateLean(dt, moving, move) {
+    const targetAmount = moving ? MAX_LEAN : 0;
+    this.leanAmount += (targetAmount - this.leanAmount) * Math.min(1, dt * 10);
+    if (moving) {
+      const d = new THREE.Vector3(move.x, 0, move.z).normalize();
+      this.leanDir.lerp(d, Math.min(1, dt * 10)).normalize();
+    }
+  }
+
+  /** Tilted "up" vector: the body leans toward leanDir by leanAmount. */
+  leanTiltVector() {
+    const c = Math.cos(this.leanAmount);
+    const s = Math.sin(this.leanAmount);
+    return new THREE.Vector3(
+      UP.x * c + this.leanDir.x * s,
+      c,
+      UP.z * c + this.leanDir.z * s
+    ).normalize();
   }
 
   /** Horizontal beam direction (unit, XZ plane), including the arrow-key yaw offset. */
