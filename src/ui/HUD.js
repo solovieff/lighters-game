@@ -29,7 +29,7 @@ export class HUD {
     });
 
     this.hint = makeBlock({
-      left: '50%', bottom: '44px', transform: 'translateX(-50%)', color: '#f2e6c9',
+      left: '50%', bottom: (window.matchMedia && window.matchMedia('(pointer: coarse)').matches ? '120px' : '44px'), transform: 'translateX(-50%)', color: '#f2e6c9',
       font: '18px sans-serif', opacity: '0', textShadow: '0 0 6px #000', transition: 'opacity 0.3s',
       background: 'rgba(0,0,0,0.45)', padding: '6px 14px', borderRadius: '6px',
     });
@@ -78,6 +78,12 @@ export class HUD {
 
   /** Shows a tutorial hint for about 5 s. */
   showHint(text) {
+    // On a phone the keyboard wording is replaced by the touch controls.
+    const touch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+    if (touch) {
+      text = text.replace('WASD — ходьба. Пробел — прыжок', 'Левый стик — ходьба, кнопка «Прыжок»')
+        .replace('Стрелки — повернуть луч по кругу', 'Правый стик — повернуть луч');
+    }
     this.hint.textContent = text;
     this.hint.style.opacity = '1';
     this.hintTimer = 5;
@@ -90,6 +96,11 @@ export class HUD {
   }
 
   /** Name of the flashlight in hand, shown at the top of the panel. */
+  /** Short HUD on phones (touch devices), the full one on a keyboard screen. */
+  get compact() {
+    return !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+  }
+
   setFlashlight(name) {
     this.flashlightName = name;
   }
@@ -158,6 +169,14 @@ export class HUD {
     const throwGame = throwReal * 0.02;
     const throwText = p.cd > 0 ? `${Math.round(throwReal)} м (${throwGame.toFixed(1)} м)` : '—';
 
+    if (this.compact) {
+      // Phone: one short block. The full readout is too tall for a landscape screen.
+      this.panel.textContent =
+        `${this.flashlightName ? this.flashlightName + '\n' : ''}` +
+        `Заряд ${p.charge.toFixed(0)} % · ${p.isTurbo ? p.mode.name : p.mode.name}\n` +
+        `Свет ${Math.round(p.lumens)} лм · ${Math.round(p.cd)} кд`;
+      return;
+    }
     this.panel.textContent =
       `${this.flashlightName ? this.flashlightName + '\n' : ''}` +
       `Заряд:       ${p.charge.toFixed(0).padStart(3)} %  ${bar}${p.sagActive ? '  SAG' : ''}${p.lvpActive ? '  LVP' : ''}\n` +

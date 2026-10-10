@@ -40,10 +40,28 @@ export class Input {
     this.pressedThisFrame.clear();
   }
 
-  /** Movement axes from WASD: x = right, z = back (camera looks toward -z). */
+  /**
+   * Touch controls feed the same axes as the keyboard: the left stick moves, the right stick aims.
+   * Set by the on-screen controls (TouchControls); zero when no finger is on a stick.
+   */
+  setTouchAxes(move, aim) {
+    this.touchMove = move;
+    this.touchAim = aim;
+  }
+
+  /** Queues a press from an on-screen button (edge event, like a key press). */
+  touchPress(name) {
+    this.pressedThisFrame.add(name);
+  }
+
+  /** Movement axes from WASD or the left stick: x = right, z = back (camera looks toward -z). */
   moveAxes() {
-    const x = (this.isDown('KeyD') ? 1 : 0) - (this.isDown('KeyA') ? 1 : 0);
-    const z = (this.isDown('KeyS') ? 1 : 0) - (this.isDown('KeyW') ? 1 : 0);
+    const kx = (this.isDown('KeyD') ? 1 : 0) - (this.isDown('KeyA') ? 1 : 0);
+    const kz = (this.isDown('KeyS') ? 1 : 0) - (this.isDown('KeyW') ? 1 : 0);
+    const tx = this.touchMove?.x || 0;
+    const tz = this.touchMove?.z || 0;
+    const x = Math.max(-1, Math.min(1, kx + tx));
+    const z = Math.max(-1, Math.min(1, kz + tz));
     const len = Math.hypot(x, z) || 1;
     return { x: x / len, z: z / len };
   }
@@ -55,7 +73,8 @@ export class Input {
   aimAxes() {
     const left = this.isDown('ArrowLeft') || this.isDown('ArrowUp') ? 1 : 0;
     const right = this.isDown('ArrowRight') || this.isDown('ArrowDown') ? 1 : 0;
-    const x = Math.max(-1, Math.min(1, right - left));
+    const tx = this.touchAim?.x || 0;
+    const x = Math.max(-1, Math.min(1, right - left + tx));
     return { x, y: 0 };
   }
 

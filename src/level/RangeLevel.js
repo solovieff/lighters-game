@@ -192,6 +192,8 @@ function polar(centre, realM, angleDeg) {
   return { x: centre.x + Math.sin(a) * r, z: centre.z - Math.cos(a) * r };
 }
 
+const IS_TOUCH = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+
 export class RangeLevel extends Level {
   /**
    * @param {THREE.Scene} scene
@@ -203,6 +205,7 @@ export class RangeLevel extends Level {
     this.root = new THREE.Group();
     scene.add(this.root);
     this.targets = [];
+    this.hideLabels = IS_TOUCH;   // phones: no distance labels (they run off a narrow screen)
     this.lux = () => 0;   // (point) => lux, set by main.js each frame
 
     // Floor: plain dark board, big enough for the whole circle.
@@ -363,7 +366,8 @@ export class RangeLevel extends Level {
       this.glowFromLux(t);   // brightest surface point the beam reaches
       v.copy(t.anchor).project(camera);
       const on = v.z < 1 && Math.abs(v.x) < 1.1 && Math.abs(v.y) < 1.1;
-      t.label.style.display = on ? 'block' : 'none';
+      // On a phone the labels would run off the screen: hidden there, the beam and the hint stay.
+      t.label.style.display = on && !this.hideLabels ? 'block' : 'none';
       if (!on) continue;
       t.label.style.left = `${(v.x * 0.5 + 0.5) * width}px`;
       t.label.style.top = `${(-v.y * 0.5 + 0.5) * height}px`;

@@ -26,6 +26,7 @@ import { SaveSystem } from './shop/SaveSystem.js';
 import { FinalDialog } from './ui/FinalDialog.js';
 import { Music } from './audio/Music.js';
 import { TouchLayer } from './ui/TouchLayer.js';
+import { TouchControls } from './ui/TouchControls.js';
 import { Workshop } from './shop/Workshop.js';
 import { RangeLevel } from './level/RangeLevel.js';
 import { MainMenu } from './ui/MainMenu.js';
@@ -303,8 +304,11 @@ window.__lumen = {
 // In portrait the game pauses; turning the phone back resumes it.
 const touchLayer = new TouchLayer(() => backToMenu());
 touchLayer.refresh();
+const touchControls = new TouchControls(input);
+touchControls.refresh();
 window.addEventListener('resize', () => {
   touchLayer.refresh();
+  touchControls.refresh();
   if (touchLayer.isBlockedByPortrait() && states.is(STATES.PLAYING)) states.go(STATES.PAUSED);
   else if (!touchLayer.isBlockedByPortrait() && states.is(STATES.PAUSED) && touchLayer.touch) states.go(STATES.PLAYING);
 });
