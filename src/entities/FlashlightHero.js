@@ -49,7 +49,6 @@ export class FlashlightHero {
     // Facing = direction the hero moves toward. Forward vector = (sin h, 0, -cos h).
     this.heading = 0;
     // Beam: a floor point in front of the hero, set by arrow keys.
-    this.aimYawOffset = 0;               // rad, left/right of heading
 
     // Halo: faint warm spill that follows the hero.
     this.halo = new THREE.PointLight(HALO.color, HALO.intensity, HALO.distance, 2);
@@ -81,7 +80,7 @@ export class FlashlightHero {
     this.velocity.z = moving ? move.z * this.speed : 0;
 
     // Turn toward movement direction.
-    if (moving) {
+    if (moving && Math.abs(aim.x) === 0) {
       const targetHeading = Math.atan2(move.x, -move.z);
       this.heading += shortestAngle(this.heading, targetHeading) * Math.min(1, dt * 8);
     }
@@ -117,8 +116,9 @@ export class FlashlightHero {
     if (moving && this.onGround) this.hopPhase += dt * 9;
     const hop = moving && this.onGround ? Math.abs(Math.sin(this.hopPhase)) * 0.02 : 0;
 
-    // Beam aim from arrow keys: free rotation in a full circle, angle wrapped to [-π, π).
-    this.aimYawOffset = wrapAngle(this.aimYawOffset + aim.x * AIM.yawSpeed * dt);
+    // Arrows turn the whole flashlight: the body itself rotates, so the beam always comes from the head.
+    // Free rotation in a full circle; heading is wrapped to [-π, π).
+    if (aim.x !== 0) this.heading = wrapAngle(this.heading + aim.x * AIM.yawSpeed * dt);
 
     // Apply to visuals: heading first, then lean in world space (works for any direction).
     this.pivot.position.copy(this.position);
@@ -186,7 +186,7 @@ export class FlashlightHero {
 
   /** Horizontal beam direction (unit, XZ plane), including the arrow-key yaw offset. */
   forwardDir() {
-    const a = this.heading + this.aimYawOffset;
+    const a = this.heading;
     return new THREE.Vector3(Math.sin(a), 0, -Math.cos(a));
   }
 }
