@@ -15,11 +15,11 @@ const FOREST_ARC_DEG = 60;     // angular width of the forest edge on the circle
 // Objects on the circle. angleDeg: 0 = straight ahead (-Z), 90 = right, 180 = behind, -90 = left.
 // Each object sits at its real distance, so the lux it receives is the honest value for that distance.
 const OBJECTS = [
-  { name: 'Конь',       realM: 30,  angleDeg: 0,    labelH: 0.5, build: 'horse' },
-  { name: 'Волк',       realM: 50,  angleDeg: 110,  labelH: 0.2, build: 'wolf' },
-  { name: 'Автомобиль', realM: 100, angleDeg: -70,  labelH: 0.3, build: 'car' },
-  { name: 'Дом',        realM: 150, angleDeg: -35,  labelH: 0.55, build: 'house' },
-  { name: 'Колодец',    realM: 200, angleDeg: 60,   labelH: 0.45, build: 'well' },
+  { name: 'Конь',       realM: 30,  angleDeg: 0,    labelH: 0.5, build: 'horse', size: 0.4 },
+  { name: 'Волк',       realM: 50,  angleDeg: 110,  labelH: 0.2, build: 'wolf', size: 0.25 },
+  { name: 'Автомобиль', realM: 100, angleDeg: -70,  labelH: 0.3, build: 'car', size: 0.5 },
+  { name: 'Дом',        realM: 150, angleDeg: -35,  labelH: 0.55, build: 'house', size: 0.7 },
+  { name: 'Колодец',    realM: 200, angleDeg: 60,   labelH: 0.45, build: 'well', size: 0.25 },
 ];
 const FOREST = { name: 'Край леса', realM: 200, fromDeg: 150, toDeg: 230 };
 
@@ -208,7 +208,7 @@ export class RangeLevel extends Level {
       g.position.set(p.x, 0, p.z);
       g.rotation.y = THREE.MathUtils.degToRad(o.angleDeg);   // face the centre
       this.root.add(g);
-      this.addTarget({ name: o.name, realM: o.realM }, p.x, p.z, o.labelH);
+      this.addTarget({ name: o.name, realM: o.realM, size: o.size }, p.x, p.z, o.labelH, this.objectSamples(g));
     }
 
     this.buildForestArc(centre, FOREST);
@@ -239,7 +239,7 @@ export class RangeLevel extends Level {
   }
 
   /** A target: a point at beam height on the object, plus a DOM label in real metres. */
-  addTarget(obj, x, z, labelHeight) {
+  addTarget(obj, x, z, labelHeight, samples = null) {
     const label = document.createElement('div');
     Object.assign(label.style, {
       position: 'fixed', transform: 'translate(-50%, -100%)', pointerEvents: 'none', display: 'none',
@@ -268,7 +268,8 @@ export class RangeLevel extends Level {
     this.targets.push({
       name: obj.name,
       realM: obj.realM,
-      pos: new THREE.Vector3(x, BEAM_HEIGHT_M, z),          // lux is measured here, on the beam
+      pos: new THREE.Vector3(x, BEAM_HEIGHT_M, z),          // centre point (kept for the anchor and fallback)
+      samples: samples ?? [new THREE.Vector3(x, BEAM_HEIGHT_M, z)],   // the readout takes the brightest (lit face counts)
       anchor: new THREE.Vector3(x, labelHeight, z),          // label sits above the object
       label,
       parts,
@@ -282,6 +283,27 @@ export class RangeLevel extends Level {
     return WORLD_LIGHT.ambientBase * lv.mul * WORLD_LIGHT.luxPerUnit;
   }
 
+  /**
+   * Points on the object itself: the centres and corners of its bounding box, at several heights.
+   * Taken from the built group, so a lit wall of a big object is sampled, not only the floor under it.
+   */
+  objectSamples(group) {
+    const box = new THREE.Box3().setFromObject(group);
+    const pts = [];
+    for (const fx of [0, 0.5, 1]) {
+      for (const fy of [0.1, 0.5, 0.9]) {
+        for (const fz of [0, 0.5, 1]) {
+          pts.push(new THREE.Vector3(
+            box.min.x + (box.max.x - box.min.x) * fx,
+            box.min.y + (box.max.y - box.min.y) * fy + 0.011,
+            box.min.z + (box.max.z - box.min.z) * fz,
+          ));
+        }
+      }
+    }
+    return pts;
+  }
+
   /** Same contract as Level. The range is a shooting bench: the hero only turns the beam. */
   get allowsMovement() {
     return false;
@@ -292,7 +314,7 @@ export class RangeLevel extends Level {
     const height = window.innerHeight;
     const v = new THREE.Vector3();
     for (const t of this.targets) {
-      t.lux = this.lux(t.pos);
+      t.lux = Math.max(...t.samples.map((p) => this.lux(p)));   // lit face of the object counts
       v.copy(t.anchor).project(camera);
       const on = v.z < 1 && Math.abs(v.x) < 1.1 && Math.abs(v.y) < 1.1;
       t.label.style.display = on ? 'block' : 'none';
