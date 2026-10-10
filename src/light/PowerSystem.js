@@ -229,6 +229,12 @@ export class PowerSystem {
     this.tempC = Math.max(HEAT.startC, this.tempC - HEAT.coolRateCps * dt);
   }
 
+  /** Charge removed by an enemy hit (contact or projectile). */
+  applyHit(pct) {
+    this.charge = Math.max(0, this.charge - pct);
+    if (this.charge <= 0) this.die();
+  }
+
   die() {
     this.dead = true;
     this.on = false;

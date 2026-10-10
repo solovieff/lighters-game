@@ -65,3 +65,14 @@ export const CAMERA = {
 export const RENDER = {
   shadowMapSize: 1024,
 };
+
+// Enemy damage and combat timing.
+export const DAMAGE_K = 10;        // %/s per decade above threshold: dps = DAMAGE_K * log10(E / threshold)
+export const INVULN_SEC = 0.8;     // hero invulnerability after a hit
+export const KNOCKBACK_M = 0.25;   // hero push-back distance on a hit (m)
+export const EVAP_SEC = 0.8;       // evaporation time of a killed shadow
+export const BLOCK_SEC = 1.0;      // "block" window: half damage after the first hit
+export const ATTACK_TOKENS = 2;    // max enemies attacking the hero at once (Squad)
+export const MOTH_MAX_CLING = 3;   // max moths clinging to the light
+export const MOTH_CLING_DIM = 0.2; // each moth cuts brightness by 20 %
+export const MOTH_DARK_RESET_SEC = 2; // light off this long removes clinging moths

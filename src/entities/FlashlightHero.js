@@ -52,6 +52,9 @@ export class FlashlightHero {
     this.halo = new THREE.PointLight(HALO.color, HALO.intensity, HALO.distance, 2);
     scene.add(this.halo);
 
+    // Knockback: a short horizontal push that decays each frame.
+    this.knock = new THREE.Vector3();
+
     // Derived each frame.
     this.headWorld = new THREE.Vector3();
     this.beamTarget = new THREE.Vector3();
@@ -86,9 +89,10 @@ export class FlashlightHero {
     }
 
     this.velocity.y -= GRAVITY * dt;
-    this.position.x += this.velocity.x * dt;
-    this.position.z += this.velocity.z * dt;
+    this.position.x += (this.velocity.x + this.knock.x) * dt;
+    this.position.z += (this.velocity.z + this.knock.z) * dt;
     this.position.y += this.velocity.y * dt;
+    this.knock.multiplyScalar(Math.max(0, 1 - dt * 8));
 
     const res = resolveBoxes(this.position, this.size, boxes);
     if (res.onGround) {
@@ -162,6 +166,17 @@ export class FlashlightHero {
       c,
       UP.z * c + this.leanDir.z * s
     ).normalize();
+  }
+
+  /**
+   * Pushes the hero back from an attacker. Heavy lights are not knocked back (assumption: not implemented yet).
+   * @param {{x:number,z:number}} dir unit direction away from the attacker
+   * @param {number} meters push distance
+   */
+  knockback(dir, meters) {
+    const v = Math.sqrt(2 * 8 * meters); // initial speed for a quick decaying push
+    this.knock.x += dir.x * v;
+    this.knock.z += dir.z * v;
   }
 
   /** Horizontal beam direction (unit, XZ plane), including the arrow-key yaw offset. */
