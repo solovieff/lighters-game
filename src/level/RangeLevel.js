@@ -20,6 +20,7 @@ const OBJECTS = [
   { name: 'Автомобиль', realM: 100, angleDeg: -70,  labelH: 0.3, build: 'car', size: 0.5 },
   { name: 'Дом',        realM: 150, angleDeg: -35,  labelH: 0.55, build: 'house', size: 0.7 },
   { name: 'Колодец',    realM: 200, angleDeg: 60,   labelH: 0.45, build: 'well', size: 0.25 },
+  { name: 'Робот',       realM: 100, angleDeg: 30,   labelH: 0.42, build: 'robot', size: 0.22 },
 ];
 const FOREST = { name: 'Край леса', realM: 200, fromDeg: 150, toDeg: 230 };
 
@@ -146,6 +147,24 @@ function buildHouse(g) {
   box(g, 0.12, 0.2, 0.01, wall, 0, 0.1, 0.255);
 }
 
+/** Robot: boxy body, square head with two eyes, an antenna and two arms. Faces the centre. */
+function buildRobot(g) {
+  const metal = new THREE.MeshStandardMaterial({ color: '#8c949c', metalness: 0.7, roughness: 0.4 });
+  const dark = new THREE.MeshStandardMaterial({ color: '#2a2f36', metalness: 0.5, roughness: 0.5 });
+  const eyes = new THREE.MeshBasicMaterial({ color: '#7fe0ff', toneMapped: false });
+  box(g, 0.14, 0.16, 0.1, metal, 0, 0.2, 0);                   // torso
+  box(g, 0.12, 0.11, 0.1, metal, 0, 0.365, 0);                 // head
+  for (const sx of [-1, 1]) {
+    box(g, 0.025, 0.12, 0.025, dark, sx * 0.095, 0.2, 0);     // arms
+    const eye = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.02, 0.01), eyes);
+    eye.position.set(sx * 0.03, 0.37, 0.051);
+    g.add(eye);
+  }
+  box(g, 0.1, 0.03, 0.08, dark, 0, 0.1, 0);                    // hips
+  box(g, 0.02, 0.07, 0.02, dark, 0, 0.44, 0);                  // antenna
+  box(g, 0.02, 0.02, 0.02, eyes, 0, 0.48, 0);                  // antenna tip
+}
+
 /** Stone well: a ring of stones, two posts, a crossbar and a bucket. Reads well from far away. */
 function buildWell(g) {
   const stone = new THREE.MeshStandardMaterial({ color: '#6e6a62', roughness: 0.95 });
@@ -164,7 +183,7 @@ function buildWell(g) {
   box(g, 0.035, 0.04, 0.035, wood, 0, 0.2, 0);
 }
 
-const BUILDERS = { horse: buildHorse, wolf: buildWolf, car: buildCar, house: buildHouse, well: buildWell };
+const BUILDERS = { horse: buildHorse, wolf: buildWolf, car: buildCar, house: buildHouse, well: buildWell, robot: buildRobot };
 
 /** Point on the circle at a real distance and an angle (game metres). Angle 0 = -Z, positive = right. */
 function polar(centre, realM, angleDeg) {
