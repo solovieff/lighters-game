@@ -1,6 +1,7 @@
 // On-screen controls for phones in landscape: a move stick (left), an aim stick (right) and three buttons.
 // They only feed Input (setTouchAxes / touchPress), so the game logic is the same as with the keyboard.
 const STICK = 110;   // px, the size of a stick's base
+const DEAD = 0.18;   // fraction of the radius: a light touch is ignored, so the hero does not creep
 const KNOB = 46;     // px, the knob
 
 export class TouchControls {
@@ -25,7 +26,8 @@ export class TouchControls {
         <button class="tc-btn" data-act="jump" style="${this.btnCss()}">Прыжок</button>
       </div>`;
     document.body.appendChild(this.root);
-    this.bindStick('.tc-move', (x, y) => { this.move = { x: x, z: y }; this.input.setTouchAxes(this.move, this.aim); });
+    // ay is +1 for screen up; the move stick needs z = -ay (forward is -z), so it is flipped here.
+    this.bindStick('.tc-move', (x, y) => { this.move = { x: x, z: -y }; this.input.setTouchAxes(this.move, this.aim); });
     this.bindStick('.tc-aim', (x) => { this.aim = { x: x }; this.input.setTouchAxes(this.move, this.aim); });
     this.root.querySelectorAll('.tc-btn').forEach((b) => {
       b.addEventListener('pointerdown', (e) => {
@@ -65,13 +67,18 @@ export class TouchControls {
       const len = Math.hypot(dx, dy);
       if (len > max) { dx = dx / len * max; dy = dy / len * max; }
       knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-      onAxis(dx / max, -dy / max);   // screen up is +z forward for move (z is back) and + for aim (handled in Input)
+      // Screen up is forward. In Input, z is the back axis (S = +1), so the move stick's z is inverted here.
+      let ax = dx / max, ay = -dy / max;
+      if (Math.hypot(ax, ay) < DEAD) { ax = 0; ay = 0; }
+      onAxis(ax, ay);
     };
     const release = () => { id = null; knob.style.transform = 'translate(-50%,-50%)'; onAxis(0, 0); };
     base.addEventListener('pointerdown', (e) => { e.preventDefault(); id = e.pointerId; base.setPointerCapture(id); set(e.clientX, e.clientY); });
     base.addEventListener('pointermove', (e) => { if (id === e.pointerId) set(e.clientX, e.clientY); });
-    base.addEventListener('pointerup', (e) => { if (id === e.pointerId) release(); });
+    // Any way the finger leaves (up, cancel, lost capture) must recentre the stick, or the hero keeps walking.
+    base.addEventListener('pointerup', release);
     base.addEventListener('pointercancel', release);
+    base.addEventListener('lostpointercapture', release);
   }
 
   /** Shows the controls only on touch devices in landscape (portrait gets the rotate notice instead). */
