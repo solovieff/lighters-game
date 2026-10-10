@@ -146,28 +146,39 @@ export class FlashlightHero {
   }
 
   /**
-   * Moves the hero along one horizontal axis and stops it at walls/props. A hop lifts it over obstacles that
-   * are lower than HOP_HEIGHT; otherwise it is blocked.
+   * Horizontal footprint of the whole body: a segment from the tail (feet point) to the head tip, thickened by
+   * the body radius. The head leads the movement, so it is the first part that reaches a wall.
+   * @returns {boolean} true if this footprint would overlap any box at the current lift
+   */
+  bodyHits(px, pz, boxes) {
+    const r = this.radiusM * 1.5;
+    const d = this.forwardDir();
+    const hx = px + d.x * this.lengthM;   // head tip
+    const hz = pz + d.z * this.lengthM;
+    const bottom = this.lift;
+    const top = this.lift + this.size.h;
+    for (const b of boxes) {
+      if (top <= b.min.y || bottom >= b.max.y) continue;      // height band misses the box
+      if (bodyNearBox(px, pz, hx, hz, r, b)) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Moves the hero along one horizontal axis. The move is refused if the whole body would overlap a wall or prop,
+   * so the head stops at the face of an obstacle. A hop lifts the body over obstacles it fully clears.
    * @param {number} dx displacement on X
    * @param {number} dz displacement on Z
    */
   moveAxis(dx, dz, boxes) {
-    this.position.x += dx;
-    this.position.z += dz;
-    for (const b of boxes) {
-      const bottom = this.lift;
-      const top = this.lift + this.size.h;
-      if (top <= b.min.y || bottom >= b.max.y) continue;   // hero's height band misses the box
-      if (this.position.x + this.size.hx <= b.min.x || this.position.x - this.size.hx >= b.max.x) continue;
-      if (this.position.z + this.size.hz <= b.min.z || this.position.z - this.size.hz >= b.max.z) continue;
-      // Hero overlaps this box. Block the move on the axis that moved, unless a hop clears the box.
-      // A hop clears the box only if the hero's underside is above its top.
-      if (this.hopT > 0 && bottom >= b.max.y) continue;
-      if (dx !== 0) this.position.x -= dx;
-      if (dz !== 0) this.position.z -= dz;
+    const nx = this.position.x + dx;
+    const nz = this.position.z + dz;
+    if (this.bodyHits(nx, nz, boxes)) {
       this.knock.set(0, 0, 0);
       return;
     }
+    this.position.x = nx;
+    this.position.z = nz;
   }
 
   /** Local-space position of the model's head tip (end of the body, before the model's matrix). */
@@ -220,6 +231,30 @@ export class FlashlightHero {
 /** Wraps an angle into [-π, π). */
 export function wrapAngle(a) {
   return a - Math.PI * 2 * Math.floor((a + Math.PI) / (Math.PI * 2));
+}
+
+/**
+ * True if the segment (x0,z0)-(x1,z1) comes within radius r of the box's XZ footprint.
+ * Implemented as a segment vs expanded rectangle slab test.
+ */
+function bodyNearBox(x0, z0, x1, z1, r, b) {
+  const minX = b.min.x - r, maxX = b.max.x + r;
+  const minZ = b.min.z - r, maxZ = b.max.z + r;
+  const dx = x1 - x0, dz = z1 - z0;
+  let tmin = 0, tmax = 1;
+  for (const [p, d, lo, hi] of [[x0, dx, minX, maxX], [z0, dz, minZ, maxZ]]) {
+    if (Math.abs(d) < 1e-12) {
+      if (p < lo || p > hi) return false;
+    } else {
+      let t1 = (lo - p) / d;
+      let t2 = (hi - p) / d;
+      if (t1 > t2) [t1, t2] = [t2, t1];
+      tmin = Math.max(tmin, t1);
+      tmax = Math.min(tmax, t2);
+      if (tmin > tmax) return false;
+    }
+  }
+  return true;
 }
 
 /** Shortest signed angle from a to b, in radians. */
