@@ -177,7 +177,8 @@ export class TableLevel extends Level {
       }
     }
     // Level exit: the far door opens with the gate (no boss in this level).
-    if (!this.data.boss && !this.bossDefeated && this.gateOpen) {
+    // A level without a gate has nothing to open first: its exit opens at once.
+    if (!this.data.boss && !this.bossDefeated && (this.gateOpen || !this.data.gate)) {
       this.bossDefeated = true;
       this.exit.open();
     }
