@@ -219,16 +219,6 @@ export class RangeLevel extends Level {
     });
   }
 
-  /**
-   * Camera framing: high above the hero, looking down, so the whole circle fits the frame and the beam
-   * can be seen sweeping in any direction. Hero at the centre.
-   */
-  cameraFrame(camera, heroPos) {
-    // The circle is 200 m (4 game m) across, so the camera sits high enough to frame all of it.
-    camera.position.set(heroPos.x, 6.5, heroPos.z + 0.6);
-    camera.lookAt(heroPos.x, 0, heroPos.z);
-  }
-
   /** Same contract as Level. The range is a shooting bench: the hero only turns the beam. */
   get allowsMovement() {
     return false;
