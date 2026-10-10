@@ -12,7 +12,8 @@ export const LEVEL_1 = {
 
   // Props: pencils are logs across the lane, coins are stacked platforms, paper is a stack, ruler and clip are metal.
   props: [
-    { kind: 'crate', x: 0.6, z: 0.0, h: 0.25 },   // a wooden crate, taller than one hop: the mouse has to eat through it
+    // A wooden crate across the whole lane (wall to wall): taller than one hop and as wide as the drawer, so it blocks the way.
+    { kind: 'crate', x: 0.6, z: 0.0, w: 0.16, h: 0.25, d: 1.5 },
     { kind: 'coin', x: 1.45, z: 0.2, count: 2 },
     { kind: 'paper', x: 1.85, z: -0.3 },
     { kind: 'coin', x: 2.2, z: 0.35, count: 2 },
