@@ -48,11 +48,15 @@ export class Input {
     return { x: x / len, z: z / len };
   }
 
-  /** Head aim axes from arrow keys: x = sideways tilt, y = forward/back tilt. */
+  /**
+   * Beam turning axis from the arrow keys. All arrows turn the beam around the same circle:
+   * Left and Up turn one way, Right and Down the other. Result is clamped to [-1, 1].
+   */
   aimAxes() {
-    const x = (this.isDown('ArrowRight') ? 1 : 0) - (this.isDown('ArrowLeft') ? 1 : 0);
-    const y = (this.isDown('ArrowDown') ? 1 : 0) - (this.isDown('ArrowUp') ? 1 : 0);
-    return { x, y };
+    const left = this.isDown('ArrowLeft') || this.isDown('ArrowUp') ? 1 : 0;
+    const right = this.isDown('ArrowRight') || this.isDown('ArrowDown') ? 1 : 0;
+    const x = Math.max(-1, Math.min(1, right - left));
+    return { x, y: 0 };
   }
 
   /**

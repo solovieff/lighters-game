@@ -67,7 +67,7 @@ export class FlashlightHero {
    * Advances physics and animation.
    * @param {number} dt seconds
    * @param {{ x: number, z: number }} move input axes (-1..1), camera-relative
-   * @param {{ x: number, y: number }} aim arrow axes: x = left/right yaw (y unused)
+   * @param {{ x: number, y: number }} aim turning axis from arrows: x = yaw (all four arrows)
    * @param {import('../physics/Physics.js').AABB[]} boxes static obstacles
    * @param {boolean} jumpPressed jump edge this frame
    */
