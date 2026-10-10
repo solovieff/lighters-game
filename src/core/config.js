@@ -9,6 +9,18 @@ export const MIN_TURBO_STEP_SEC = 4;      // minimal Turbo step duration
 export const GRAVITY = 9.81;              // m/s^2
 export const MAX_DT = 0.05;               // clamp for frame delta time (s)
 
+// Heat, in °C and game seconds.
+export const HEAT = {
+  startC: 25,
+  coolRateCps: 0.5,          // °C per game second when not holding Turbo
+  turboRecoverMarginC: 15,   // Turbo available again only below thermalLimitC - this
+};
+
+// Sag (no regulatedBoost): brightness falls to minFactor at 0% charge.
+export const SAG = { thresholdPct: 10, minFactor: 0.5 };
+// Regulated boost (Fireflies): flat down to thresholdPct, then halves every halvingSec.
+export const LVP = { thresholdPct: 3, halvingSec: 1 };
+
 // Input timing.
 export const CLICK = {
   TRIPLE_WINDOW_S: 0.6,   // three LMB clicks within this window = manual strobe
@@ -30,6 +42,19 @@ export const HALO = {
   intensity: 0.25,
   distance: 2.2,
 };
+
+// Beam visuals (purely cosmetic, does not affect gameplay).
+export const BEAM_VIS = {
+  intensityK: 3,          // SpotLight intensity = K * log10(lumens + 1)
+  decay: 1.5,
+  coneOpacity: 0.22,
+  minAngle: 0.05,         // rad, narrowest visual cone
+  moteCount: 70,
+  moteSize: 0.012,
+};
+
+// Light mode the game starts in (index into flashlight.modes). 2 = "30%" for Convoy.
+export const START_MODE_INDEX = 2;
 
 export const CAMERA = {
   fov: 55,
