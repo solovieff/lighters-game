@@ -21,9 +21,7 @@ export class TouchControls {
       <div class="tc-stick tc-move" style="${this.stickCss('left:24px;bottom:24px')}"><div class="tc-knob"></div></div>
       <div class="tc-stick tc-aim" style="${this.stickCss('right:24px;bottom:24px')}"><div class="tc-knob"></div></div>
       <div class="tc-buttons" style="position:absolute;right:156px;bottom:24px;display:flex;flex-direction:column;gap:8px;pointer-events:auto">
-        <button class="tc-btn" data-act="light" style="${this.btnCss()}">Свет</button>
         <button class="tc-btn" data-act="mode" style="${this.btnCss()}">Режим</button>
-        <button class="tc-btn" data-act="jump" style="${this.btnCss()}">Прыжок</button>
       </div>`;
     document.body.appendChild(this.root);
     // ay is +1 for screen up; the move stick needs z = -ay (forward is -z), so it is flipped here.
@@ -32,8 +30,7 @@ export class TouchControls {
     this.root.querySelectorAll('.tc-btn').forEach((b) => {
       b.addEventListener('pointerdown', (e) => {
         e.preventDefault();
-        const act = b.dataset.act;
-        const code = act === 'light' ? 'KeyL' : act === 'mode' ? 'KeyQ' : 'Space';
+        const code = 'KeyQ';
         this.input.touchPress(code);
       });
     });
