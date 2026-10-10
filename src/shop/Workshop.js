@@ -21,7 +21,7 @@ const STYLE = `
   .ws-root { position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
     background: radial-gradient(ellipse at center, rgba(40,28,16,1) 0%, rgba(4,4,6,1) 75%);   // opaque: the game must not show through
     z-index: 15; font-family: 'Red Hat Display', system-ui, sans-serif; color: #e6dfcf; }
-  .workshop { width: min(1100px, 94vw); height: min(680px, 90vh); display: flex; flex-direction: column;
+  .workshop { width: min(1180px, 96vw); height: min(720px, 92vh); display: flex; flex-direction: column;
     background: rgba(12,10,8,0.6); border: 1px solid rgba(255,190,110,0.18); border-radius: 14px;
     box-shadow: 0 0 60px rgba(255,160,80,0.08); overflow: hidden; }
   .ws-head { display: flex; justify-content: space-between; align-items: baseline; padding: 18px 26px;
@@ -29,7 +29,7 @@ const STYLE = `
   .ws-title { font-size: 30px; color: #ffd9a0; letter-spacing: 4px; }
   .ws-sparks { font-size: 15px; color: #c9a27a; }
   .ws-body { flex: 1; display: flex; min-height: 0; }
-  .ws-list { width: 360px; overflow-y: auto; padding: 14px; border-right: 1px solid rgba(255,255,255,0.06); }
+  .ws-list { width: 280px; flex-shrink: 0; overflow-y: auto; padding: 14px; border-right: 1px solid rgba(255,255,255,0.06); }
   /* Phones: the list and the card stack vertically, the whole screen scrolls, nothing is squeezed. */
   @media (max-width: 720px) {
     .workshop { width: 100vw; height: 100vh; border-radius: 0; border: none; }
@@ -47,26 +47,32 @@ const STYLE = `
   .ws-row .ws-name { font-size: 16px; color: #e6dfcf; }
   .ws-row .ws-sub { font-size: 12px; color: #7d8694; margin-top: 3px; }
   .ws-row .ws-price { font-size: 12px; color: #c9a27a; margin-top: 4px; }
-  .ws-card { flex: 1; overflow-y: auto; padding: 22px 28px; }
+  .ws-card { flex: 1; min-width: 0; overflow-y: auto; padding: 22px 28px; }
   .ws-card-title { font-size: 26px; color: #ffe9c8; }
   .ws-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 4px; }
   .ws-card-action { flex-shrink: 0; padding-top: 4px; }
   .ws-role { font-size: 14px; color: #c9a27a; margin-top: 4px; margin-bottom: 16px; }
-  .ws-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 22px; margin-bottom: 18px; }
+  .ws-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px 22px; margin-bottom: 18px; }
   .ws-stat { border-left: 2px solid rgba(255,190,110,0.35); padding-left: 10px; }
   .ws-stat .k { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #7d8694; }
   .ws-stat .v { font-size: 16px; color: #e6dfcf; margin-top: 2px; }
   .ws-subtitle { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #7d8694; margin: 14px 0 6px; }
-  .ws-mode-row { display: grid; grid-template-columns: minmax(0,1fr) 92px 84px 62px 84px; gap: 10px; align-items: center;
+  .ws-mode-row { display: grid; grid-template-columns: minmax(0,1fr) 88px 92px 66px 86px; gap: 8px; align-items: center;
     font-size: 13px; color: #c9c4b8; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
   .ws-mode-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .ws-mode-name { white-space: nowrap; }
   .ws-mode-src { padding-left: 10px; }
   .ws-mod { font-size: 13px; color: #c9c4b8; padding: 4px 0; }
-  .ws-mod-row { display: grid; grid-template-columns: minmax(0,1fr) 110px 86px 96px; gap: 10px; align-items: center;
+  .ws-mod-row { display: grid; grid-template-columns: minmax(0,1fr) 96px 78px 96px; gap: 8px; align-items: center;
     font-size: 13px; color: #c9c4b8; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
-  .ws-mod-name, .ws-mod-status { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ws-mod-name { white-space: normal; line-height: 1.25; }
+  .ws-mod-status { white-space: nowrap; }
   .ws-mod-action { text-align: right; }
+  /* Phones (after the base rows, so they win): compact columns that fit a 390 px screen. */
+  @media (max-width: 720px) {
+  .ws-mode-row { grid-template-columns: minmax(0,1fr) 58px 62px 44px 70px; gap: 4px; }
+  .ws-mod-row { grid-template-columns: minmax(0,1fr) 78px 70px; gap: 6px; }
+  }
   .ws-mod-status { text-align: left; }
   .ws-mod-src { padding-left: 4px; }
   .ws-owned { display: inline-block; padding: 5px 12px; border-radius: 8px; font-size: 12px; letter-spacing: 1px;
