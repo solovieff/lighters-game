@@ -45,8 +45,6 @@ export const LEVEL_1 = {
   // Charging stations: checkpoint + full charge.
   checkpoints: [
     { id: 'start', x: 0.0, z: 0.5 },
-    { id: 'mid', x: 1.9, z: 0.5 },
-    { id: 'boss', x: 2.95, z: -0.45 },
   ],
 
   // Enemy waves: only the weakest crawlers. The last one waits in the empty room beyond the gate.
