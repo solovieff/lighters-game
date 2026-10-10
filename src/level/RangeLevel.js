@@ -35,12 +35,12 @@ function createGrassTexture(size = 512) {
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#2d5a2a';
+  ctx.fillStyle = '#1a2e18';
   ctx.fillRect(0, 0, size, size);
   // Mottled base colour.
   for (let i = 0; i < 2500; i++) {
     const v = 0.7 + Math.random() * 0.6;
-    ctx.fillStyle = `rgba(${Math.round(45 * v)}, ${Math.round(90 * v)}, ${Math.round(40 * v)}, 0.35)`;
+    ctx.fillStyle = `rgba(${Math.round(26 * v)}, ${Math.round(46 * v)}, ${Math.round(24 * v)}, 0.45)`;
     ctx.fillRect(Math.random() * size, Math.random() * size, 3 + Math.random() * 5, 3 + Math.random() * 5);
   }
   // Short blades in lighter and darker greens.
@@ -48,7 +48,7 @@ function createGrassTexture(size = 512) {
     const x = Math.random() * size;
     const y = Math.random() * size;
     const lean = (Math.random() - 0.5) * 4;
-    ctx.strokeStyle = Math.random() < 0.5 ? '#4f8a3c' : '#1f4420';
+    ctx.strokeStyle = Math.random() < 0.5 ? '#3d6a30' : '#0f200e';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(x, y);
@@ -171,7 +171,7 @@ export class RangeLevel extends Level {
     grassTex.repeat.set(16, 16);
     const floor = new THREE.Mesh(
       new THREE.PlaneGeometry(40, 40),   // wide enough that the edge never shows, even at 200 m
-      new THREE.MeshStandardMaterial({ map: grassTex, roughness: 0.95, metalness: 0 })
+      new THREE.MeshStandardMaterial({ map: grassTex, roughness: 0.95, metalness: 0, color: '#8a8f86' })
     );
     floor.rotation.x = -Math.PI / 2;
     floor.position.set(heroStart.x, 0, heroStart.z);
@@ -226,11 +226,11 @@ export class RangeLevel extends Level {
       textAlign: 'center', whiteSpace: 'nowrap', fontFamily: 'Red Hat Display, system-ui, sans-serif',
     });
     label.innerHTML = `
-      <div class="rl-name" style="font-size:15px;color:#a9a396;letter-spacing:2px;text-transform:uppercase"></div>
+      <div class="rl-name" style="font-size:15px;color:#e6dfcf;letter-spacing:2px;text-transform:uppercase;text-shadow:0 0 6px #000,0 1px 2px #000"></div>
       <div class="rl-dist" style="font-size:30px;color:#ffe9c8;text-shadow:0 0 10px rgba(0,0,0,0.9)"></div>
       <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px">
         <span class="rl-dot" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#000;box-shadow:0 0 0 1px #555"></span>
-        <span class="rl-lux" style="font-size:13px;color:#a9a396"></span>
+        <span class="rl-lux" style="font-size:13px;color:#e6dfcf;text-shadow:0 0 6px #000,0 1px 2px #000"></span>
       </div>`;
     document.body.appendChild(label);
     const parts = {
