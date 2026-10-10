@@ -16,7 +16,7 @@ import { BeamVisual } from './light/BeamVisual.js';
 import { summarizeSpec } from './light/BeamModel.js';
 import { luxOnTarget, dpsFromLux } from './light/LightDamage.js';
 import { HUD } from './ui/HUD.js';
-import { FLASHLIGHTS } from './data/flashlights.js';
+import { effectiveSpec } from './data/effects.js';
 import { LEVEL_1 } from './data/levels.js';
 import { Level } from './level/Level.js';
 import { SaveSystem } from './shop/SaveSystem.js';
@@ -50,7 +50,11 @@ floor.receiveShadow = true;
 scene.add(floor);
 
 // Hero and light systems.
-const spec = FLASHLIGHTS.find((f) => f.id === 'convoy_s2plus_sst40');
+// The flashlight the player chose in the Workshop, with its installed mods applied (copy, specs untouched).
+const saved = SaveSystem.load();
+const spec = effectiveSpec(saved.active, saved.mods);
+console.log(`[loadout] ${spec.brand} ${spec.model}, модов: ${saved.mods.length}`);
+spec.flags.pendingEffects.forEach((p) => console.log(`[loadout] не применено: ${p}`));
 const hero = new FlashlightHero(scene, spec.id);
 hero.position.set(LEVEL_1.start.x, 0, LEVEL_1.start.z);
 const rig = new CameraRig(gfx.camera);

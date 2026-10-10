@@ -73,7 +73,7 @@ export class Workshop {
       const row = document.createElement('div');
       row.className = 'ws-row' + (this.selectedId === f.id ? ' sel' : '') + (owned ? '' : ' locked');
       const title = f.nickname ? `${f.brand} ${f.model} «${f.nickname}»` : `${f.brand} ${f.model}`;
-      row.innerHTML = `<div>${title}</div><div class="ws-price">${owned ? (active ? 'в руке' : 'куплен') : `${f.price} Искр`}</div>`;
+      row.innerHTML = `<div>${title}</div><div class="ws-price">${owned ? (active ? 'в игре' : 'куплен') : `${f.price} Искр`}</div>`;
       row.onclick = () => { this.selectedId = f.id; this.message = ''; this.render(); };
       list.appendChild(row);
     }
@@ -126,8 +126,8 @@ export class Workshop {
     if (!owned) {
       return `<button class="ws-btn" data-act="buy">Купить за ${f.price} Искр</button>`;
     }
-    if (active) return '<span class="ws-note">Выбран</span>';
-    return '<button class="ws-btn" data-act="select">Взять в руку</button>';
+    if (active) return '<span class="ws-note">Сейчас в игре</span>';
+    return '<button class="ws-btn" data-act="select">Играть этим</button>';
   }
 
   buy(f) {
@@ -141,7 +141,7 @@ export class Workshop {
 
   select(f) {
     SaveSystem.setActive(f.id);
-    this.message = `Выбран: ${f.model}`;
+    this.message = `Теперь играешь: ${f.model}`;
     this.onSelect(f.id);
     this.render();
   }

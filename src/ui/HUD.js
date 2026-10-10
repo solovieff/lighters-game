@@ -35,7 +35,7 @@ export class HUD {
     });
 
     this.controls = makeBlock({
-      left: '12px', bottom: '10px', color: '#7d8694', font: '13px monospace',
+      right: '12px', top: '10px', color: '#7d8694', font: '13px monospace', textAlign: 'right',
     });
     this.controls.textContent =
       'WASD ходьба · Пробел прыжок · стрелки луч · Q/E режим · L свет · C заряд (тест) · Esc пауза';
