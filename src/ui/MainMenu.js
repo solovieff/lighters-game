@@ -3,14 +3,13 @@
 export class MainMenu {
   /**
    * @param {HTMLElement} root container element
-   * @param {(choice: 'range' | 'workshop' | 'level' | 'basement') => void} onChoose
+   * @param {(choice: 'play' | 'range' | 'workshop') => void} onChoose
    */
   constructor(root, onChoose) {
     this.root = root;
     this.onChoose = onChoose;
     this.items = [
-      { id: 'level', title: 'Уровень', sub: 'Ящик стола · обучение' },
-      { id: 'basement', title: 'Подвал', sub: 'Уровень 2' },
+      { id: 'play', title: 'Играть', sub: 'Продолжить с того места, где остановился' },
       { id: 'workshop', title: 'Мастерская', sub: 'Фонари, покупки, моды' },
       { id: 'range', title: 'Полигон', sub: 'Проверка дальности и люкса' },
     ];

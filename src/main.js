@@ -19,7 +19,7 @@ import { luxOnTarget, dpsFromLux } from './light/LightDamage.js';
 import { cdAtAngle } from './light/BeamModel.js';
 import { HUD } from './ui/HUD.js';
 import { effectiveSpec } from './data/effects.js';
-import { LEVEL_1 } from './data/levels.js';
+import { LEVEL_1, LEVEL_2 } from './data/levels.js';
 import { BasementLevel } from './level/BasementLevel.js';
 import { TableLevel } from './level/TableLevel.js';
 import { SaveSystem } from './shop/SaveSystem.js';
@@ -103,16 +103,29 @@ const check = summarizeSpec(spec);
 console.log(`[check] ${spec.brand} ${spec.model}: режим ${check.mode}, ` +
   `hotspot ${check.thetaHotDeg.toFixed(1)}°, throw ${check.throwReal.toFixed(1)} м real / ${check.throwGame.toFixed(2)} м game`);
 
-// Main menu: Уровень, Мастерская, Полигон.
+/** The campaign in order. «Играть» starts the first level that is not done yet. */
+const CAMPAIGN = [
+  { id: LEVEL_1.id, start: startGame },
+  { id: LEVEL_2.id, start: startBasement },
+];
+
+/** Starts the next unfinished level, or the last one when everything is done. */
+function playCampaign() {
+  const done = SaveSystem.load().levelsDone;
+  const next = CAMPAIGN.find((c) => !done.includes(c.id)) || CAMPAIGN[CAMPAIGN.length - 1];
+  navigate(next.id === LEVEL_1.id ? 'level' : 'basement');
+  next.start();
+}
+
+// Main menu: Играть, Мастерская, Полигон.
 const menuRoot = document.createElement('div');
 menuRoot.id = 'main-menu';
 document.body.appendChild(menuRoot);
 const menu = new MainMenu(menuRoot, (choice) => {
   hud.setHidden(false);
   // Each choice gets its own address, so reload and back/forward keep the mode.
-  navigate(choice);
-  if (choice === 'level') startGame();
-  else if (choice === 'basement') startBasement();
+  if (choice !== 'play') navigate(choice);
+  if (choice === 'play') playCampaign();
   else if (choice === 'range') startRange();
   else if (choice === 'workshop') openWorkshop();
 });
@@ -284,6 +297,7 @@ function respawn() {
 
 /** Victory screen: Sparks are saved to localStorage. */
 function showVictory() {
+  SaveSystem.completeLevel(level.data.id);
   const total = SaveSystem.addSparks(level.sparks);
   hud.setOverlay({
     title: 'Уровень пройден',
