@@ -132,7 +132,6 @@ export const LEVEL_2 = {
 
   checkpoints: [
     { id: 'start', x: 0.0, z: 0.9 },
-    { id: 'mid', x: 4.8, z: 0.9 },
   ],
 
   // Enemies appear well ahead of the hero (2-3 m), not next to him: the hero walks up to them and uses the beam.
