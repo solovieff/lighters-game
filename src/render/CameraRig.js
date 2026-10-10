@@ -1,0 +1,31 @@
+// Third-person camera that follows the hero from behind and above.
+import * as THREE from 'three';
+import { CAMERA } from '../core/config.js';
+
+export class CameraRig {
+  /** @param {THREE.PerspectiveCamera} camera */
+  constructor(camera) {
+    this.camera = camera;
+    this.yaw = 0;                  // horizontal orbit, controlled by keys
+    this.target = new THREE.Vector3();
+  }
+
+  /**
+   * Places the camera behind and above the target, then looks at it.
+   * @param {THREE.Vector3} targetPos hero feet position
+   * @param {number} dt seconds
+   * @param {number} yawInput -1..1 from keys
+   */
+  update(targetPos, dt, yawInput = 0) {
+    this.yaw += yawInput * dt * 2.2;
+    const dist = CAMERA.distance + 0.8;
+    const offset = new THREE.Vector3(
+      Math.sin(this.yaw) * dist,
+      CAMERA.height + 0.6,
+      Math.cos(this.yaw) * dist
+    );
+    this.target.lerp(targetPos.clone().add(new THREE.Vector3(0, 0.35, 0)), Math.min(1, dt * 10));
+    this.camera.position.copy(this.target).add(offset);
+    this.camera.lookAt(this.target);
+  }
+}

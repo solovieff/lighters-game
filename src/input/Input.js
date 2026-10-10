@@ -1,17 +1,11 @@
-// Unified input: keyboard, Pointer Lock mouse, click patterns, wheel, gamepad.
+// Keyboard-only input (plus optional gamepad). The mouse is not used anywhere in the game.
 import { bus } from '../core/EventBus.js';
-import { CLICK } from '../core/config.js';
 
 export class Input {
-  /** @param {HTMLElement} target element that receives mouse events and gets pointer lock */
-  constructor(target) {
-    this.target = target;
-    this.keys = new Set();          // currently held key codes
-    this.mouseDX = 0;               // accumulated mouse movement this frame (pointer lock)
-    this.mouseDY = 0;
-    this.locked = false;
-    this.clickTimes = [];           // timestamps of recent LMB presses
-    this.gamepadPrev = {};          // previous button states for edge detection
+  constructor() {
+    this.keys = new Set();      // currently held key codes
+    this.pressedThisFrame = new Set(); // keys that went down since last consumeFrame()
+    this.gamepadPrev = {};      // previous button states for edge detection
     this.bindEvents();
   }
 
@@ -19,60 +13,16 @@ export class Input {
     window.addEventListener('keydown', (e) => this.onKeyDown(e));
     window.addEventListener('keyup', (e) => this.keys.delete(e.code));
     window.addEventListener('blur', () => this.keys.clear());
-
-    this.target.addEventListener('mousedown', (e) => this.onMouseDown(e));
-    this.target.addEventListener('contextmenu', (e) => e.preventDefault());
-    this.target.addEventListener('wheel', (e) => {
-      bus.emit('wheel', { dir: Math.sign(e.deltaY) });
-    }, { passive: true });
-
-    document.addEventListener('pointerlockchange', () => {
-      this.locked = document.pointerLockElement === this.target;
-      bus.emit('pointerLockChanged', { locked: this.locked });
-    });
-    document.addEventListener('mousemove', (e) => {
-      if (!this.locked) return;
-      this.mouseDX += e.movementX;
-      this.mouseDY += e.movementY;
-    });
-  }
-
-  /** Requests pointer lock. Must be called from a user gesture. */
-  requestLock() {
-    this.target.requestPointerLock?.();
   }
 
   onKeyDown(e) {
+    // Stop arrows and Space from scrolling the page.
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
     if (e.repeat) return;
     this.keys.add(e.code);
+    this.pressedThisFrame.add(e.code);
     bus.emit('keyDown', { code: e.code });
     if (e.code === 'Escape') bus.emit('pause');
-  }
-
-  onMouseDown(e) {
-    if (e.button === 0) {
-      this.registerLeftClick();
-      bus.emit('lmbDown', {});
-    } else if (e.button === 2) {
-      bus.emit('rmbDown', {});
-    }
-    if (!this.locked) this.requestLock();
-  }
-
-  /**
-   * Detects single, double and triple fast LMB clicks.
-   * Emits 'lmbClick' with count. Triple within CLICK.TRIPLE_WINDOW_S = manual strobe.
-   */
-  registerLeftClick() {
-    const now = performance.now() / 1000;
-    this.clickTimes.push(now);
-    this.clickTimes = this.clickTimes.filter((t) => now - t <= CLICK.TRIPLE_WINDOW_S);
-    const count = this.clickTimes.length;
-    bus.emit('lmbClick', { count });
-    if (count === 3) {
-      bus.emit('manualStrobe', {});
-      this.clickTimes = [];
-    }
   }
 
   /** Returns true while the key is held. */
@@ -80,12 +30,29 @@ export class Input {
     return this.keys.has(code);
   }
 
-  /** Returns and clears accumulated mouse movement. */
-  consumeMouse() {
-    const out = { dx: this.mouseDX, dy: this.mouseDY };
-    this.mouseDX = 0;
-    this.mouseDY = 0;
-    return out;
+  /** Returns true if the key was pressed (edge) since the previous call. */
+  wasPressed(code) {
+    return this.pressedThisFrame.has(code);
+  }
+
+  /** Clears edge-triggered presses. Call once per frame after reading them. */
+  endFrame() {
+    this.pressedThisFrame.clear();
+  }
+
+  /** Movement axes from WASD: x = right, z = back (camera looks toward -z). */
+  moveAxes() {
+    const x = (this.isDown('KeyD') ? 1 : 0) - (this.isDown('KeyA') ? 1 : 0);
+    const z = (this.isDown('KeyS') ? 1 : 0) - (this.isDown('KeyW') ? 1 : 0);
+    const len = Math.hypot(x, z) || 1;
+    return { x: x / len, z: z / len };
+  }
+
+  /** Head aim axes from arrow keys: x = sideways tilt, y = forward/back tilt. */
+  aimAxes() {
+    const x = (this.isDown('ArrowRight') ? 1 : 0) - (this.isDown('ArrowLeft') ? 1 : 0);
+    const y = (this.isDown('ArrowDown') ? 1 : 0) - (this.isDown('ArrowUp') ? 1 : 0);
+    return { x, y };
   }
 
   /**
@@ -105,9 +72,8 @@ export class Input {
     }
     const ax = (i) => (Math.abs(pad.axes[i] || 0) < 0.15 ? 0 : pad.axes[i]);
     return {
-      move: { x: ax(0), y: ax(1) },   // left stick
+      move: { x: ax(0), z: ax(1) },   // left stick
       aim: { x: ax(2), y: ax(3) },    // right stick
-      trigger: pressed(7),
     };
   }
 }
