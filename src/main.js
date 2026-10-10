@@ -103,18 +103,53 @@ const check = summarizeSpec(spec);
 console.log(`[check] ${spec.brand} ${spec.model}: режим ${check.mode}, ` +
   `hotspot ${check.thetaHotDeg.toFixed(1)}°, throw ${check.throwReal.toFixed(1)} м real / ${check.throwGame.toFixed(2)} м game`);
 
-/** The campaign in order. «Играть» starts the first level that is not done yet. */
-const CAMPAIGN = [
-  { id: LEVEL_1.id, start: startGame },
-  { id: LEVEL_2.id, start: startBasement },
-];
+/** Every playable level: its data, how to build it, its address and the hint shown on start. */
+const LEVELS = {
+  drawer: {
+    data: LEVEL_1,
+    make: () => new TableLevel(scene, LEVEL_1, spec, particles),
+    path: 'level',
+    hint: 'Ящик стола. Пройди направо к выходу',
+  },
+  basement: {
+    data: LEVEL_2,
+    make: () => new BasementLevel(scene, spec, particles),
+    path: 'basement',
+    hint: 'Подвал. Пройди направо к выходу',
+  },
+};
 
-/** Starts the next unfinished level, or the last one when everything is done. */
-function playCampaign() {
+/** Campaign order. «Играть» starts the first unfinished level, a win moves to the next one. */
+const CAMPAIGN = ['drawer', 'basement'];
+
+/**
+ * Starts a level by its label. The only way a level starts: menu, next level after a win, restart after game over.
+ * The level is built again, so the enemies, the battery and the lives start fresh.
+ */
+function runLevel(label, hint = LEVELS[label].hint) {
+  const cfg = LEVELS[label];
+  level.dispose();
+  level = cfg.make();
+  const start = level.respawnPoint;
+  hero.position.set(start.x, 0, start.z);
+  hero.heading = Math.PI / 2;   // the beam points right, the way the hero walks
+  hero.aimYawOffset = 0;
+  victoryShown = false;
+  resetLevelStatus();
+  navigate(cfg.path);
+  states.go(STATES.PLAYING);
+  hud.showHint(hint);
+}
+
+/** Label of the level that is running now (the key in LEVELS). */
+function currentLabel() {
+  return Object.keys(LEVELS).find((k) => LEVELS[k].data.id === level.data.id);
+}
+
+/** The first campaign level not done yet; the last one when everything is done. */
+function nextLabel() {
   const done = SaveSystem.load().levelsDone;
-  const next = CAMPAIGN.find((c) => !done.includes(c.id)) || CAMPAIGN[CAMPAIGN.length - 1];
-  navigate(next.id === LEVEL_1.id ? 'level' : 'basement');
-  next.start();
+  return CAMPAIGN.find((id) => !done.includes(id)) || CAMPAIGN[CAMPAIGN.length - 1];
 }
 
 // Main menu: Играть, Мастерская, Полигон.
@@ -123,11 +158,12 @@ menuRoot.id = 'main-menu';
 document.body.appendChild(menuRoot);
 const menu = new MainMenu(menuRoot, (choice) => {
   hud.setHidden(false);
-  // Each choice gets its own address, so reload and back/forward keep the mode.
-  if (choice !== 'play') navigate(choice);
-  if (choice === 'play') playCampaign();
-  else if (choice === 'range') startRange();
-  else if (choice === 'workshop') openWorkshop();
+  if (choice === 'play') runLevel(nextLabel());
+  else {
+    navigate(choice);
+    if (choice === 'range') startRange();
+    else if (choice === 'workshop') openWorkshop();
+  }
 });
 
 
@@ -175,42 +211,6 @@ function startRange() {
   hud.showHint('Полигон: поворачивай луч стрелками, смотри на волка и край леса');
 }
 
-/** Game over: the first level again, from its start, with full lives and battery. */
-function restartFirstLevel() {
-  level.dispose();
-  level = new TableLevel(scene, LEVEL_1, spec, particles);
-  hero.position.set(LEVEL_1.start.x, 0, LEVEL_1.start.z);
-  resetLevelStatus();
-  hud.showHint('Жизни закончились. Начинаем с первого уровня');
-}
-
-/** Starts a level from its data. Each level has its own battery, lives and start point. */
-function startLevel(LevelClass, hint) {
-  level.dispose();
-  level = new LevelClass(scene, spec, particles);
-  const start = level.respawnPoint;
-  hero.position.set(start.x, 0, start.z);
-  hero.heading = Math.PI / 2;
-  hero.aimYawOffset = 0;
-  resetLevelStatus();
-  states.go(STATES.PLAYING);
-  hud.showHint(hint);
-}
-
-function startBasement() {
-  if (!states.is(STATES.MENU)) return;
-  startLevel(BasementLevel, 'Подвал. Пройди направо к выходу');
-}
-
-function startGame() {
-  if (!states.is(STATES.MENU)) return;
-  // The drawer starts with the beam pointing right (+X), the way the hero walks.
-  hero.heading = Math.PI / 2;
-  hero.aimYawOffset = 0;
-  states.go(STATES.PLAYING);
-  hud.showHint('Ящик стола. Пройди направо к выходу');
-}
-
 bus.on('stateChanged', ({ from, to }) => console.log(`[state] ${from} -> ${to}`));
 bus.on('pause', () => {
   if (states.is(STATES.PLAYING)) states.go(STATES.PAUSED);
@@ -244,9 +244,18 @@ function backToMenu() {
 window.__lumen = {
   state: () => ({ state: states.state, dead: power.dead, charge: power.charge, lives, deadTimer, hero: hero.position.toArray(), enemiesAlive: level.enemies ? level.enemies.filter((e) => e.alive).length : 0, wavesArmed: level.spawner ? level.spawner.waves.filter((w) => !w.done).length : 0 }),
   kill: () => { power.die(); },
+  // Teleport the hero for a live check (move to a given x, keeping the level).
+  warp: (x) => { hero.position.set(x, 0, 0); },
+  victoryNow: () => { if (!victoryShown) { victoryShown = true; showVictory(); } },
 };
 
 window.addEventListener('keydown', (e) => {
+  if (states.is(STATES.VICTORY) && (e.code === 'Enter' || e.code === 'NumpadEnter')) {
+    const next = CAMPAIGN[CAMPAIGN.indexOf(currentLabel()) + 1];
+    if (next) runLevel(next);        // a fresh battery and lives come with the level start
+    else backToMenu();
+    return;
+  }
   if (states.is(STATES.WORKSHOP)) {
     if (e.code === 'Escape') { workshop.close(); menu.show(); states.go(STATES.MENU); }
     return;
@@ -258,8 +267,8 @@ window.addEventListener('keydown', (e) => {
 // Start target from the URL: /range, /level, /workshop, or the menu for /.
 const route = resolveRoute();
 if (route === 'range') { hud.setHidden(false); startRange(); }
-else if (route === 'level') startGame();
-else if (route === 'basement') startBasement();
+else if (route === 'level') runLevel('drawer');
+else if (route === 'basement') runLevel('basement');
 else if (route === 'workshop') openWorkshop();
 else menu.show();
 // Hide the in-game HUD while the menu is on screen.
@@ -299,10 +308,12 @@ function respawn() {
 function showVictory() {
   SaveSystem.completeLevel(level.data.id);
   const total = SaveSystem.addSparks(level.sparks);
+  const idx = CAMPAIGN.indexOf(currentLabel());
+  const next = CAMPAIGN[idx + 1];
   hud.setOverlay({
     title: 'Уровень пройден',
     lines: [`Искры за уровень: ${level.sparks}`, `Всего Искр: ${total}`],
-    footer: 'R — заново, Esc — пауза',
+    footer: next ? 'Enter — следующий уровень' : 'Enter — в меню',
   });
   states.go(STATES.VICTORY);
   console.log(`[victory] Искры ${level.sparks}, всего ${total}`);
@@ -351,7 +362,7 @@ const loop = new Loop(
         hud.setLives(lives);
         if (lives <= 0) {
           // No lives left: back to the first level from the start, with full lives and battery.
-          restartFirstLevel();
+          runLevel(CAMPAIGN[0], 'Жизни закончились. Начинаем с первого уровня');
         } else {
           respawn();
         }
