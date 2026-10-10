@@ -9,6 +9,12 @@ export const MIN_TURBO_STEP_SEC = 4;      // minimal Turbo step duration
 export const GRAVITY = 9.81;              // m/s^2
 export const MAX_DT = 0.05;               // clamp for frame delta time (s)
 
+// Input timing.
+export const CLICK = {
+  TRIPLE_WINDOW_S: 0.6,   // three LMB clicks within this window = manual strobe
+  DOUBLE_WINDOW_S: 0.35,  // two clicks within this window = double click (Turbo on anduril2)
+};
+
 export const CAMERA = {
   fov: 55,
   distance: 1.6,   // behind player (m)
