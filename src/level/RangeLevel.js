@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { RANGE_SCALE } from '../core/config.js';
 import { Level } from './Level.js';
+import { WORLD_LIGHT } from '../core/config.js';
 import { AABB } from '../physics/Physics.js';
 
 const LENS_OFFSET_M = 0.118;   // head tip offset from the feet point along the beam (Convoy 118 mm)
@@ -18,6 +19,7 @@ const OBJECTS = [
   { name: 'Волк',       realM: 50,  angleDeg: 110,  labelH: 0.2, build: 'wolf' },
   { name: 'Автомобиль', realM: 100, angleDeg: -70,  labelH: 0.3, build: 'car' },
   { name: 'Дом',        realM: 150, angleDeg: -35,  labelH: 0.55, build: 'house' },
+  { name: 'Колодец',    realM: 200, angleDeg: 60,   labelH: 0.45, build: 'well' },
 ];
 const FOREST = { name: 'Край леса', realM: 200, fromDeg: 150, toDeg: 230 };
 
@@ -144,7 +146,25 @@ function buildHouse(g) {
   box(g, 0.12, 0.2, 0.01, wall, 0, 0.1, 0.255);
 }
 
-const BUILDERS = { horse: buildHorse, wolf: buildWolf, car: buildCar, house: buildHouse };
+/** Stone well: a ring of stones, two posts, a crossbar and a bucket. Reads well from far away. */
+function buildWell(g) {
+  const stone = new THREE.MeshStandardMaterial({ color: '#6e6a62', roughness: 0.95 });
+  const wood = new THREE.MeshStandardMaterial({ color: '#4a3424', roughness: 0.95 });
+  const water = new THREE.MeshStandardMaterial({ color: '#0d1a22', roughness: 0.2, metalness: 0.3 });
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * Math.PI * 2;
+    box(g, 0.035, 0.07, 0.035, stone, Math.cos(a) * 0.1, 0.035, Math.sin(a) * 0.1);
+  }
+  const pit = new THREE.Mesh(new THREE.CircleGeometry(0.08, 16), water);
+  pit.rotation.x = -Math.PI / 2;
+  pit.position.y = 0.005;
+  g.add(pit);
+  for (const sx of [-1, 1]) box(g, 0.02, 0.2, 0.02, wood, sx * 0.1, 0.17, 0);
+  box(g, 0.24, 0.02, 0.02, wood, 0, 0.27, 0);
+  box(g, 0.035, 0.04, 0.035, wood, 0, 0.2, 0);
+}
+
+const BUILDERS = { horse: buildHorse, wolf: buildWolf, car: buildCar, house: buildHouse, well: buildWell };
 
 /** Point on the circle at a real distance and an angle (game metres). Angle 0 = -Z, positive = right. */
 function polar(centre, realM, angleDeg) {
@@ -231,6 +251,9 @@ export class RangeLevel extends Level {
       <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px">
         <span class="rl-dot" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#000;box-shadow:0 0 0 1px #555"></span>
         <span class="rl-lux" style="font-size:13px;color:#e6dfcf;text-shadow:0 0 6px #000,0 1px 2px #000"></span>
+      </div>
+      <div class="rl-split" style="font-size:11px;color:#9a9486;margin-top:2px;text-shadow:0 0 6px #000"></div>
+      <div style="display:none">
       </div>`;
     document.body.appendChild(label);
     const parts = {
@@ -238,6 +261,7 @@ export class RangeLevel extends Level {
       dist: label.querySelector('.rl-dist'),
       dot: label.querySelector('.rl-dot'),
       lux: label.querySelector('.rl-lux'),
+      split: label.querySelector('.rl-split'),
     };
     parts.name.textContent = obj.name;
     parts.dist.textContent = `${obj.realM} м`;
@@ -250,6 +274,12 @@ export class RangeLevel extends Level {
       parts,
       lux: 0,
     });
+  }
+
+  /** Outside light in lux for the current level: ambient intensity × luxPerUnit (a readout assumption). */
+  outsideLux() {
+    const lv = WORLD_LIGHT.levels[this.worldLevel ?? WORLD_LIGHT.startLevel];
+    return WORLD_LIGHT.ambientBase * lv.mul * WORLD_LIGHT.luxPerUnit;
   }
 
   /** Same contract as Level. The range is a shooting bench: the hero only turns the beam. */
@@ -271,7 +301,10 @@ export class RangeLevel extends Level {
       t.label.style.top = `${(-v.y * 0.5 + 0.5) * height}px`;
       t.parts.dot.style.background = brightnessColor(t.lux);
       t.parts.dot.style.boxShadow = `0 0 ${Math.min(18, 2 + t.lux * 4)}px ${brightnessColor(t.lux)}`;
-      t.parts.lux.textContent = `${t.lux.toFixed(2)} лк`;
+      // Total = beam + outside light. Outside light is a flat value for the whole range (see config).
+      const outside = this.outsideLux();
+      t.parts.lux.textContent = `${(t.lux + outside).toFixed(2)} лк`;
+      t.parts.split.textContent = `фонарь ${t.lux.toFixed(2)} · внешний ${outside.toFixed(2)}`;
     }
   }
 

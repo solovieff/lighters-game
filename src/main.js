@@ -327,6 +327,7 @@ const loop = new Loop(
     }
 
     level.lux = luxFor(origin, axis, beamCd, beamLumens);   // the range reads it; other levels ignore it
+    level.worldLevel = worldLevel;   // the range reads the outside-light level for its readout
     particles.update(dt);
     hud.update(dt, power);
     input.endFrame();

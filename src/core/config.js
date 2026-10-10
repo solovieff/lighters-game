@@ -108,4 +108,7 @@ export const WORLD_LIGHT = {
   ambientBase: 0.02,
   hemiBase: 0.02,
   startLevel: 0,
+  // ASSUMPTION (gameplay, not a measurement): ambient intensity -> lux at the object, for the readout only.
+  // 1 unit of ambient ≈ this many lux. Chosen so Светло gives a daylight-like value, Темно ≈ 0.
+  luxPerUnit: 20,
 };
