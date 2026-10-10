@@ -1,6 +1,6 @@
 // HUD over the canvas: charge, temperature, mode, lumens and throw, Sparks, lives, boss bar,
 // tutorial hints, notices and centred overlays (death, victory). Full menus and styling come in stage 9.
-import { HEAT } from '../core/config.js';
+import { HEAT, WORLD_LIGHT } from '../core/config.js';
 
 /** Creates a fixed-position HUD block and appends it to the page. */
 function makeBlock(css) {
@@ -57,7 +57,7 @@ export class HUD {
       justifyContent: 'center', background: 'rgba(0,0,0,0.6)', textAlign: 'center',
     });
 
-    this.worldLightName = 'Темно';
+    this.worldLightName = WORLD_LIGHT.levels[WORLD_LIGHT.startLevel].name;
     bus.on('worldLight', ({ name }) => { this.worldLightName = name; });
     bus.on('stepDown', ({ step }) => this.showNotice(`СТУПЕНЬ ВНИЗ → ${step + 1}`));
     bus.on('overheat', () => this.showNotice('ПЕРЕГРЕВ'));

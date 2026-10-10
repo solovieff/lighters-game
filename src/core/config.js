@@ -103,7 +103,7 @@ export const WORLD_LIGHT = {
     { name: 'Темно', mul: 0 },
     { name: 'Сумерки', mul: 0.05 / 0.02 },
     { name: 'Мягко', mul: 0.2 / 0.02 },
-    { name: 'Светло', mul: 0.6 / 0.02 },
+    { name: 'Светло', mul: 3.0 / 0.02 },
   ],
   ambientBase: 0.02,
   hemiBase: 0.02,
