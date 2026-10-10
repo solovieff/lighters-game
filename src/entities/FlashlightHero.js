@@ -23,6 +23,10 @@ export class FlashlightHero {
     this.lengthM = built.lengthM;
     this.radiusM = built.radiusM;
 
+    // Flashlight lies horizontally: the model's +Y (head) points along the beam direction.
+    // Physics still uses an upright box (see this.size); only the visual pivot is laid down.
+    this.model.rotation.z = -Math.PI / 2;
+    this.model.position.y = this.radiusM;
     this.pivot = new THREE.Group();
     this.pivot.add(this.model);
     scene.add(this.pivot);
@@ -121,21 +125,28 @@ export class FlashlightHero {
     this.pivot.position.y += hop;
     this.qHeading.setFromAxisAngle(UP, this.heading);
     this.qLean.setFromUnitVectors(UP, this.leanTiltVector());
-    this.pivot.quaternion.copy(this.qLean).multiply(this.qHeading);
+    // Lying flashlight: pivot yaws toward heading only (no lean for a horizontal body).
+    this.pivot.quaternion.copy(this.qHeading);
 
     const sy = 1 + this.squash * 0.15;
     const sxz = 1 - this.squash * 0.07;
     this.model.scale.set(sxz, sy, sxz);
 
     // Head position and beam target (floor point in front of the hero).
-    this.headWorld.set(this.position.x, this.position.y + this.lengthM, this.position.z);
+    // Head is the lit end, at the horizontal tip of the lying flashlight.
+    const fwd = this.forwardDir();
+    this.headWorld.set(
+      this.position.x + fwd.x * this.lengthM * 0.5,
+      this.position.y + this.radiusM,
+      this.position.z + fwd.z * this.lengthM * 0.5
+    );
     // Beam is horizontal at head height: yaw only, full circle. Target = point 2 m along the beam.
     this.beamDir.copy(this.forwardDir());
     this.beamDir.y = 0;
     this.beamDir.normalize();
     this.beamTarget.copy(this.headWorld).addScaledVector(this.beamDir, 2);
 
-    this.halo.position.set(this.position.x, this.position.y + this.lengthM * 0.6, this.position.z);
+    this.halo.position.set(this.position.x, this.position.y + this.radiusM * 3, this.position.z);
   }
 
   /**

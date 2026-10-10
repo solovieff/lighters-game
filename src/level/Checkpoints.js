@@ -31,8 +31,16 @@ export class Checkpoint {
     cable.rotation.z = Math.PI / 2;
     group.add(cable);
 
-    const glow = new THREE.PointLight('#7cff9a', 0.08, 0.5, 2);
-    glow.position.set(0, 0.06, 0);
+    // Taller pad with a clearly visible green light: this is a station to stand on, not an item.
+    const pad = new THREE.Mesh(
+      new THREE.BoxGeometry(0.14, 0.03, 0.1),
+      new THREE.MeshStandardMaterial({ color: '#1a1c20', metalness: 0.6, roughness: 0.4 })
+    );
+    pad.position.y = 0.015;
+    group.add(pad);
+
+    const glow = new THREE.PointLight('#7cff9a', 0.35, 0.8, 2);
+    glow.position.set(0, 0.08, 0);
     group.add(glow);
 
     parent.add(group);

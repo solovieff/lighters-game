@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { BEAM_VIS, RENDER } from '../core/config.js';
 import { thetaHot, rangeGame, SPILL_ANGLE } from './BeamModel.js';
+import { segmentHitsBox } from './LightDamage.js';
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
@@ -86,8 +87,32 @@ export class BeamVisual {
   }
 
   /**
+   * Distance along a ray to the first wall box, or Infinity. Used to stop the cone at walls.
+   * @returns {number} metres (game units) from origin to the hit point
+   */
+  distanceToWall(origin, dir, boxes, maxLen) {
+    let best = maxLen;
+    const end = new THREE.Vector3();
+    for (const box of boxes) {
+      // Binary search along the ray for the first blocked distance (cheap, good enough for visuals).
+      end.copy(origin).addScaledVector(dir, maxLen);
+      if (!segmentHitsBox(origin, end, box)) continue;
+      let lo = 0;
+      let hi = maxLen;
+      for (let i = 0; i < 16; i++) {
+        const mid = (lo + hi) / 2;
+        end.copy(origin).addScaledVector(dir, mid);
+        if (segmentHitsBox(origin, end, box)) hi = mid;
+        else lo = mid;
+      }
+      best = Math.min(best, hi);
+    }
+    return best;
+  }
+
+  /**
    * Updates light and cone from the current beam state.
-   * @param {{origin:{x,y,z}, target:{x,y,z}, lumens:number, cd:number, cct:number, on:boolean}} s
+   * @param {{origin:{x,y,z}, target:{x,y,z}, lumens:number, cd:number, cct:number, on:boolean, boxes?:AABB[]}} s
    */
   update(s) {
     if (!s.on || s.lumens <= 0 || s.cd <= 0) {
@@ -96,7 +121,11 @@ export class BeamVisual {
       return;
     }
     this.dir.set(s.target.x - s.origin.x, s.target.y - s.origin.y, s.target.z - s.origin.z).normalize();
-    const len = clamp(rangeGame(s.cd), 0.3, 12);
+    // The cone stops at the first wall: light does not pass through walls.
+    const maxLen = clamp(rangeGame(s.cd), 0.3, 12);
+    const len = s.boxes && s.boxes.length
+      ? Math.max(0.05, this.distanceToWall(new THREE.Vector3(s.origin.x, s.origin.y, s.origin.z), this.dir, s.boxes, maxLen))
+      : maxLen;
     // Visual half-angle: a few times the hotspot, never wider than the spill cone.
     const half = clamp(thetaHot(s.lumens, s.cd) * 3, BEAM_VIS.minAngle, SPILL_ANGLE);
 

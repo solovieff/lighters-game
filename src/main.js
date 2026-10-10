@@ -108,7 +108,10 @@ bus.on('pickup', ({ value }) => {
   hud.setSparks(level.sparks);
   console.log(`[pickup] +${value} Искр, всего ${level.sparks}`);
 });
-bus.on('checkpoint', ({ id }) => console.log(`[checkpoint] ${id}: заряд 100 %`));
+bus.on('checkpoint', ({ id }) => {
+  console.log(`[checkpoint] ${id}: заряд 100 %`);
+  hud.showHint('Станция: заряд полный. Здесь точка возрождения');
+});
 bus.on('hint', ({ text }) => console.log(`[hint] ${text}`));
 bus.on('bossDefeated', () => console.log('[boss] Чернильная Клякса побеждена, выход открыт'));
 bus.on('heroHit', ({ pct, source }) => console.log(`[hit] ${source}: −${pct}%`));
@@ -200,7 +203,7 @@ const loop = new Loop(
     // Each clinging moth dims the emitted light by MOTH_CLING_DIM (battery drain is unchanged).
     const dim = Math.pow(1 - MOTH_CLING_DIM, mothsClinging.length);
     beamVis.update({
-      origin, target, lumens: power.lumens * dim, cd: power.cd * dim, cct: spec.cct, on: lit,
+      origin, target, lumens: power.lumens * dim, cd: power.cd * dim, cct: spec.cct, on: lit, boxes,
     });
 
     // Moths leave when the light has been off for MOTH_DARK_RESET_SEC.
