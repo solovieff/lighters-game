@@ -303,6 +303,11 @@ export class RangeLevel extends Level {
     return pts;
   }
 
+  /** No halo on the range: it would light objects outside the beam and spoil the lux readout. */
+  get usesHalo() {
+    return false;
+  }
+
   /** Same contract as Level. The range is a shooting bench: the hero only turns the beam. */
   get allowsMovement() {
     return false;

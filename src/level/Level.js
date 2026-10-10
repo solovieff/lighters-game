@@ -25,6 +25,9 @@ export class Level {
    */
   update(dt, heroPos, power, camera) {}
 
+  /** Whether the hero's soft halo (ambient glow around the lamp) is drawn here. The range turns it off to measure honestly. */
+  get usesHalo() { return true; }
+
   /** Whether the hero can walk and jump on this level (the range is a shooting bench: no). */
   get allowsMovement() { return true; }
 

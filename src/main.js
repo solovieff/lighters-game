@@ -239,6 +239,7 @@ const loop = new Loop(
       const dimNow = Math.pow(1 - MOTH_CLING_DIM, mothsClinging.length);
       const axisNow = hero.beamTarget.clone().sub(hero.headWorld).normalize();
       level.lux = luxFor(hero.headWorld, axisNow, power.cd * dimNow, power.lumens * dimNow);
+      hero.halo.visible = level.usesHalo;   // the range has no halo (honest lux readout)
       level.worldLevel = worldLevel;
       level.update(dt, hero.position, power, gfx.camera);
       if (level.atExit(hero.position.x) && !victoryShown) {
