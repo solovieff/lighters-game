@@ -24,6 +24,7 @@ import { BasementLevel } from './level/BasementLevel.js';
 import { TableLevel } from './level/TableLevel.js';
 import { SaveSystem } from './shop/SaveSystem.js';
 import { FinalDialog } from './ui/FinalDialog.js';
+import { Music } from './audio/Music.js';
 import { Workshop } from './shop/Workshop.js';
 import { RangeLevel } from './level/RangeLevel.js';
 import { MainMenu } from './ui/MainMenu.js';
@@ -294,7 +295,12 @@ window.__lumen = {
   victoryNow: () => { if (!victoryShown) { victoryShown = true; showVictory(); } },
 };
 
+// Music: starts on the first key press (browsers allow sound only after a user gesture). M toggles it.
+const music = new Music();
+let musicStarted = false;
 window.addEventListener('keydown', (e) => {
+  if (!musicStarted) { musicStarted = true; music.start(); }
+  if (e.code === 'KeyM') { music.toggle(); return; }
   if (states.is(STATES.VICTORY) && (e.code === 'Enter' || e.code === 'NumpadEnter')) {
     const next = CAMPAIGN[CAMPAIGN.indexOf(currentLabel()) + 1];
     if (next) runLevel(next);        // a fresh battery and lives come with the level start
