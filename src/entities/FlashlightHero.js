@@ -113,10 +113,8 @@ export class FlashlightHero {
     if (moving && this.onGround) this.hopPhase += dt * 9;
     const hop = moving && this.onGround ? Math.abs(Math.sin(this.hopPhase)) * 0.02 : 0;
 
-    // Beam aim from arrow keys.
-    this.aimYawOffset = THREE.MathUtils.clamp(
-      this.aimYawOffset + aim.x * AIM.yawSpeed * dt, -Math.PI / 2, Math.PI / 2
-    );
+    // Beam aim from arrow keys: free rotation in a full circle, angle wrapped to [-π, π).
+    this.aimYawOffset = wrapAngle(this.aimYawOffset + aim.x * AIM.yawSpeed * dt);
     this.aimReach = THREE.MathUtils.clamp(
       this.aimReach - aim.y * AIM.reachSpeed * dt, AIM.reachMin, AIM.reachMax
     );
@@ -184,6 +182,11 @@ export class FlashlightHero {
     const a = this.heading + this.aimYawOffset;
     return new THREE.Vector3(Math.sin(a), 0, -Math.cos(a));
   }
+}
+
+/** Wraps an angle into [-π, π). */
+export function wrapAngle(a) {
+  return a - Math.PI * 2 * Math.floor((a + Math.PI) / (Math.PI * 2));
 }
 
 /** Shortest signed angle from a to b, in radians. */
