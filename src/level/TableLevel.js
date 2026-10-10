@@ -38,14 +38,15 @@ export class TableLevel extends Level {
     this.spawner = new Spawner(data.waves);
     this.boss = null;
     // Mouse quest: only if the level data asks for it. The pencil it eats is the one with the eraser.
-    const pencil = data.props.find((p) => p.kind === 'pencil');
-    this.pencilAt = pencil ? { x: pencil.x, z: pencil.z } : null;
+    // The thing the mouse eats is named in the quest data (a crate now, not a pencil).
+    const target = data.quest ? data.props.find((p) => p.kind === data.quest.target) : null;
+    this.pencilAt = target ? { x: target.x, z: target.z } : null;   // (name kept: the quest's goal point)
     this.mouse = data.quest && this.pencilAt ? new MouseQuest(this.root, data.quest, this.pencilAt) : null;
     if (this.mouse) {
       // When the mouse is done, the pencil and its eraser disappear from the drawer.
       this.mouse.onEaten = () => {
-        // Hide the pencil and its eraser AND remove their colliders: the hero must not need to jump over them any more.
-        const gone = this.root.children.filter((c) => c.name === 'pencil' || c.name === 'pencil-eraser');
+        // Hide the crate AND remove its collider: once eaten, the way is clear.
+        const gone = this.root.children.filter((c) => c.name === 'crate');
         const dead = new Set();
         for (const c of gone) {
           c.visible = false;

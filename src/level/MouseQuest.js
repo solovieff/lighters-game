@@ -11,7 +11,7 @@ export class MouseQuest {
   /**
    * @param {THREE.Scene|THREE.Group} parent where the mouse mesh lives (the level root)
    * @param {object} quest data from levels.js (quest block)
-   * @param {{x:number,z:number}} pencilAt the pencil the mouse eats
+   * @param {{x:number,z:number}} pencilAt the point the mouse eats (the crate's spot)
    */
   constructor(parent, quest, pencilAt) {
     this.quest = quest;

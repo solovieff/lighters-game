@@ -12,7 +12,7 @@ export const LEVEL_1 = {
 
   // Props: pencils are logs across the lane, coins are stacked platforms, paper is a stack, ruler and clip are metal.
   props: [
-    { kind: 'pencil', x: 0.6, z: 0.0, eraserEnd: 'pos' },   // the pencil has its own eraser on one end
+    { kind: 'crate', x: 0.6, z: 0.0, h: 0.25 },   // a wooden crate, taller than one hop: the mouse has to eat through it
     { kind: 'coin', x: 1.45, z: 0.2, count: 2 },
     { kind: 'paper', x: 1.85, z: -0.3 },
     { kind: 'coin', x: 2.2, z: 0.35, count: 2 },
@@ -48,7 +48,7 @@ export const LEVEL_1 = {
   boss: null,
 
   // Mouse quest: shine into the left corner, a mouse runs out and eats the pencil.
-  quest: { id: 'mouse', lightTargetX: -0.3, lightTargetZ: -0.6, mouseStart: { x: -0.4, z: -0.6 }, eatsPropIndex: 0 },
+  quest: { id: 'mouse', lightTargetX: -0.3, lightTargetZ: -0.6, mouseStart: { x: -0.4, z: -0.6 }, target: 'crate', targetX: 0.6, targetZ: 0.0 },
 
   // Exit: at the far end of the drawer.
   exit: { x: 3.95 },

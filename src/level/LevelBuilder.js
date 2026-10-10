@@ -11,6 +11,7 @@ const PROP_STYLE = {
   paper: { color: '#d8d3c0', roughness: 0.95, metalness: 0.0, metal: false },
   ruler: { color: '#9aa0a8', roughness: 0.3, metalness: 0.9, metal: true },
   clip: { color: '#b8bec8', roughness: 0.3, metalness: 0.9, metal: true },
+  crate: { color: '#7a5a34', roughness: 0.9, metalness: 0.0, metal: false },   // a wooden box: taller than one hop
 };
 
 const propMats = {};
@@ -106,6 +107,14 @@ export function buildProps(root, props) {
       cap.name = 'pencil-eraser';
       cap.userData.collider = pencilCollider;
       root.add(cap);
+    } else if (p.kind === 'crate') {
+      // A box higher than the hop (0.18 m), so the hero cannot fly over it: only the mouse can clear the way.
+      const w = p.w ?? 0.16, h = p.h ?? 0.25, d = p.d ?? 0.16;
+      const crate = addMesh(root, new THREE.BoxGeometry(w, h, d), mat, p.x, h / 2, p.z);
+      crate.name = 'crate';
+      const crateCollider = collider(p.x, h / 2, p.z, w, h, d, style.metal);
+      colliders.push(crateCollider);
+      crate.userData.collider = crateCollider;
     } else if (p.kind === 'coin') {
       const r = 0.12;
       const hgt = 0.05;
