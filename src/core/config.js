@@ -21,16 +21,15 @@ export const SAG = { thresholdPct: 10, minFactor: 0.5 };
 // Regulated boost (Fireflies): flat down to thresholdPct, then halves every halvingSec.
 export const LVP = { thresholdPct: 3, halvingSec: 1 };
 
-// Input timing.
+// Input timing (mouse clicks are not used in the keyboard-only build yet).
 export const CLICK = {
   TRIPLE_WINDOW_S: 0.6,   // three LMB clicks within this window = manual strobe
   DOUBLE_WINDOW_S: 0.35,  // two clicks within this window = double click (Turbo on anduril2)
 };
 
-// Beam aim with arrow keys: where the light lands on the floor in front of the hero.
+// Beam turning with the arrow keys: a full circle, all four arrows.
 export const AIM = {
-  yawSpeed: 2.0,        // rad/s when holding Left/Right: beam turns around in a full circle
-  // The beam is always horizontal, at head height. Up/Down do not aim.
+  yawSpeed: 2.0,          // rad/s
 };
 
 // Faint glow around the hero so the world is never pitch black (LED spill, not a world light).
@@ -73,3 +72,22 @@ export const ATTACK_TOKENS = 2;    // max enemies attacking the hero at once (Sq
 export const MOTH_MAX_CLING = 3;   // max moths clinging to the light
 export const MOTH_CLING_DIM = 0.2; // each moth cuts brightness by 20 %
 export const MOTH_DARK_RESET_SEC = 2; // light off this long removes clinging moths
+
+// Level flow.
+export const LEVEL = {
+  lives: 3,
+  pickupRadius: 0.12,       // m, Light Shard collected within this XZ distance
+  checkpointRadius: 0.15,   // m, charging station touched within this XZ distance
+  respawnDelaySec: 2.0,     // s of "battery dead" screen before respawn
+};
+
+// Ink Blot boss.
+export const BOSS = {
+  coreHeight: 0.12,         // m, core sits at the beam height (head level)
+  contactRange: 0.45,       // m, distance to start touching the hero
+  contactPct: 8,            // charge removed per touch
+  contactCdSec: 1.5,        // s between touches
+  approachSpeed: 0.25,      // m/s
+  splitAt: [0.66, 0.33],    // HP fractions where the Ink Blot splits
+  splitCount: 2,            // small blots per split
+};

@@ -1,73 +1,57 @@
-// Stage 5: enemies. Crawler, Swarm, Moth, Watcher, Invisible; StateMachine, Squad tokens,
-// light damage with occlusion, charge damage, invulnerability, knockback, evaporation.
-// Keyboard only: WASD move, Space jump, arrows aim, Q/E modes, L light on/off, C refill battery (test), F strobe (later).
+// Stage 6: level 1 "Ящик стола". The hero walks from the start along +X to the exit.
+// Light, enemies and HUD from stages 4–5; this stage adds the level runtime, pickups, checkpoints,
+// waves, tutorial hints, the Ink Blot boss and the victory screen.
+// Keyboard only: WASD move, Space jump, arrows turn the beam, Q/E modes, L light on/off, C refill (test), Esc pause.
 import * as THREE from 'three';
 import { Renderer } from './render/Renderer.js';
 import { CameraRig } from './render/CameraRig.js';
-import { createWoodTexture } from './assets/Textures.js';
 import { Loop } from './core/Loop.js';
 import { StateManager, STATES } from './core/StateManager.js';
 import { bus } from './core/EventBus.js';
 import { Input } from './input/Input.js';
-import { AABB } from './physics/Physics.js';
 import { FlashlightHero } from './entities/FlashlightHero.js';
 import { Dummy } from './entities/Dummy.js';
 import { PowerSystem } from './light/PowerSystem.js';
 import { BeamVisual } from './light/BeamVisual.js';
-import { illuminance, summarizeSpec } from './light/BeamModel.js';
+import { summarizeSpec } from './light/BeamModel.js';
 import { luxOnTarget, dpsFromLux } from './light/LightDamage.js';
 import { HUD } from './ui/HUD.js';
 import { FLASHLIGHTS } from './data/flashlights.js';
-import { START_MODE_INDEX, MOTH_MAX_CLING, MOTH_CLING_DIM, MOTH_DARK_RESET_SEC } from './core/config.js';
+import { LEVEL_1 } from './data/levels.js';
+import { Level } from './level/Level.js';
+import { SaveSystem } from './shop/SaveSystem.js';
+import { START_MODE_INDEX, MOTH_MAX_CLING, MOTH_CLING_DIM, MOTH_DARK_RESET_SEC, LEVEL } from './core/config.js';
 import { Particles } from './fx/Particles.js';
 import { Squad } from './ai/Squad.js';
 import { HeroHealth } from './entities/HeroHealth.js';
 import { Projectile } from './entities/Projectile.js';
-import { Crawler } from './entities/enemies/Crawler.js';
-import { Swarm } from './entities/enemies/Swarm.js';
-import { Moth } from './entities/enemies/Moth.js';
-import { Watcher } from './entities/enemies/Watcher.js';
-import { Invisible } from './entities/enemies/Invisible.js';
 
 const gfx = new Renderer();
 const { scene } = gfx;
 const input = new Input();
 const states = new StateManager(STATES.MENU);
 
-// World: dim blue-grey fill so the floor is never pitch black. The beam is the real light.
+// Drawer lighting: dim fill so the floor is never pitch black. The beam is the real light.
 scene.add(new THREE.AmbientLight('#8090b8', 2.4));
 scene.add(new THREE.HemisphereLight('#5a6a98', '#202020', 2.0));
 
+// Drawer floor (wood).
+import { createWoodTexture } from './assets/Textures.js';
 const woodTex = createWoodTexture(512);
-woodTex.repeat.set(4, 4);
+woodTex.repeat.set(8, 4);
 const floor = new THREE.Mesh(
-  new THREE.PlaneGeometry(40, 40),
+  new THREE.PlaneGeometry(LEVEL_1.bounds.maxX - LEVEL_1.bounds.minX + 2, LEVEL_1.bounds.halfZ * 2 + 1),
   new THREE.MeshStandardMaterial({ map: woodTex, roughness: 0.6, metalness: 0.0 })
 );
 floor.rotation.x = -Math.PI / 2;
+floor.position.set((LEVEL_1.bounds.minX + LEVEL_1.bounds.maxX) / 2, 0, 0);
 floor.receiveShadow = true;
 scene.add(floor);
-
-// Obstacles: a low log, a block to climb, a tall block. They also block light (occlusion test).
-const obstacles = [
-  { cx: 0, cy: 0.05, cz: -1.5, sx: 0.6, sy: 0.1, sz: 0.1 },
-  { cx: 0.8, cy: 0.15, cz: -2.5, sx: 0.4, sy: 0.3, sz: 0.4 },
-  { cx: -0.9, cy: 0.35, cz: -3.5, sx: 0.5, sy: 0.7, sz: 0.5 },
-];
-const boxes = [];
-const blockMat = new THREE.MeshStandardMaterial({ color: '#6b4a2f', roughness: 0.8 });
-for (const o of obstacles) {
-  const mesh = new THREE.Mesh(new THREE.BoxGeometry(o.sx, o.sy, o.sz), blockMat);
-  mesh.position.set(o.cx, o.cy, o.cz);
-  mesh.castShadow = true;
-  mesh.receiveShadow = true;
-  scene.add(mesh);
-  boxes.push(AABB.fromCenterSize(o.cx, o.cy, o.cz, o.sx, o.sy, o.sz));
-}
 
 // Hero and light systems.
 const spec = FLASHLIGHTS.find((f) => f.id === 'convoy_s2plus_sst40');
 const hero = new FlashlightHero(scene, spec.id);
+hero.position.set(LEVEL_1.start.x, 0, LEVEL_1.start.z);
 const rig = new CameraRig(gfx.camera);
 const power = new PowerSystem(spec, START_MODE_INDEX);
 const beamVis = new BeamVisual(scene);
@@ -76,26 +60,21 @@ const particles = new Particles(scene);
 const squad = new Squad();
 const health = new HeroHealth();
 
-// Test dummies (photometry check from stage 4).
-const dummies = [
-  new Dummy(scene, 'Манекен 1', 0, -1.2),
-  new Dummy(scene, 'Манекен 2', 0, -2.5),
-  new Dummy(scene, 'Манекен 3', 0, -4.0),
-];
+const level = new Level(scene, LEVEL_1, particles, spec.cri);
+const boxes = level.colliders;
 
-// Enemies: one of each type for testing, placed a few metres from the start.
-const enemies = [
-  new Crawler(scene, 0.0, -0.9, particles),
-  new Swarm(scene, 0.25, -0.75, particles, 0, 3),
-  new Swarm(scene, -0.2, -0.95, particles, 1, 3),
-  new Swarm(scene, 0.05, -1.1, particles, 2, 3),
-  new Moth(scene, 0.0, -0.7, particles),
-  new Watcher(scene, 0.0, -6.0, particles),
-  new Invisible(scene, 0.0, -1.3, particles),
-];
+// Test dummies (photometry check from stage 4). Hidden on the level to keep the drawer clean.
+const dummies = [];
+
 const projectiles = [];
 const mothsClinging = [];
-let darkTimer = 0; // how long the light has been off (moths leave after MOTH_DARK_RESET_SEC)
+let darkTimer = 0;
+let lives = LEVEL.lives;
+hud.setLives(lives);
+let deadTimer = 0;
+let victoryShown = false;
+let logTimer = 0;
+let elapsed = 0;
 
 // Startup check log (stage 4).
 const check = summarizeSpec(spec);
@@ -117,6 +96,7 @@ function startGame() {
   if (!states.is(STATES.MENU)) return;
   states.go(STATES.PLAYING);
   overlay.remove();
+  hud.showHint('Ящик стола. Пройди направо к выходу');
 }
 
 bus.on('stateChanged', ({ from, to }) => console.log(`[state] ${from} -> ${to}`));
@@ -124,7 +104,13 @@ bus.on('pause', () => {
   if (states.is(STATES.PLAYING)) states.go(STATES.PAUSED);
   else if (states.is(STATES.PAUSED)) states.go(STATES.PLAYING);
 });
-bus.on('modeChanged', ({ mode }) => console.log(`[light] режим ${mode.name}: ${mode.lumens} лм, ${mode.cd} кд`));
+bus.on('pickup', ({ value }) => {
+  hud.setSparks(level.sparks);
+  console.log(`[pickup] +${value} Искр, всего ${level.sparks}`);
+});
+bus.on('checkpoint', ({ id }) => console.log(`[checkpoint] ${id}: заряд 100 %`));
+bus.on('hint', ({ text }) => console.log(`[hint] ${text}`));
+bus.on('bossDefeated', () => console.log('[boss] Чернильная Клякса побеждена, выход открыт'));
 bus.on('heroHit', ({ pct, source }) => console.log(`[hit] ${source}: −${pct}%`));
 bus.on('enemyDied', ({ type }) => console.log(`[enemy] died: ${type}`));
 
@@ -151,8 +137,26 @@ function spawnProjectile(from, dir, pct) {
   projectiles.push(new Projectile(scene, from, dir, pct));
 }
 
-let elapsed = 0;
-let logTimer = 0;
+/** Respawn after the battery dies: back to the last charging station with a full charge. */
+function respawn() {
+  hero.position.set(level.respawnPoint.x, 0, level.respawnPoint.z);
+  hero.velocity.set(0, 0, 0);
+  power.setCharge(100);
+  deadTimer = 0;
+  hud.setOverlay(null);
+}
+
+/** Victory screen: Sparks are saved to localStorage. */
+function showVictory() {
+  const total = SaveSystem.addSparks(level.sparks);
+  hud.setOverlay({
+    title: 'Уровень пройден',
+    lines: [`Искры за уровень: ${level.sparks}`, `Всего Искр: ${total}`],
+    footer: 'R — заново, Esc — пауза',
+  });
+  states.go(STATES.VICTORY);
+  console.log(`[victory] Искры ${level.sparks}, всего ${total}`);
+}
 
 const loop = new Loop(
   (dt) => {
@@ -164,11 +168,32 @@ const loop = new Loop(
       elapsed += dt;
       hero.update(dt, input.moveAxes(), input.aimAxes(), boxes, input.wasPressed('Space'));
       rig.update(hero.position, dt, 0);
+      level.update(dt, hero.position, power);
+      if (level.atExit(hero.position.x) && !victoryShown) {
+        victoryShown = true;
+        showVictory();
+      }
     }
     power.update(dt);
     health.update(dt);
 
-    // Beam from the head to the floor point in front of the hero.
+    // Battery dead: show the overlay, then respawn at the last charging station.
+    if (power.dead && states.is(STATES.PLAYING)) {
+      deadTimer += dt;
+      hud.setOverlay({ title: 'Батарея разряжена', lines: [`Жизни: ${lives - 1} из ${LEVEL.lives}`] });
+      if (deadTimer >= LEVEL.respawnDelaySec) {
+        lives -= 1;
+        hud.setLives(lives);
+        if (lives <= 0) {
+          hud.setOverlay({ title: 'Конец', lines: ['Жизни закончились'], footer: 'Esc — пауза' });
+          states.go(STATES.GAMEOVER);
+        } else {
+          respawn();
+        }
+      }
+    }
+
+    // Beam from the head to the target in front of the hero.
     const origin = hero.headWorld;
     const target = hero.beamTarget;
     const lit = power.on && !power.dead;
@@ -184,21 +209,10 @@ const loop = new Loop(
       mothsClinging.length = 0;
     }
 
-    // Light axis for hits on enemies and for the dummies.
     const axis = new THREE.Vector3().subVectors(target, origin).normalize();
-
-    // Lux at dummies (occlusion-aware).
-    for (const d of dummies) {
-      const lux = lit
-        ? luxOnTarget({ origin, axis, point: d.position, cd: power.cd, lumens: power.lumens, boxes })
-        : 0;
-      d.setLux(lux);
-      d.updateLabel(gfx.camera, window.innerWidth, window.innerHeight);
-    }
-
-    // Enemies: light damage (lux → dps), then AI tick. Moths cling → light is dimmed the same way.
     const beamLumens = power.lumens * dim;
     const beamCd = power.cd * dim;
+
     const ctx = {
       heroFeet: hero.position,
       heroHead: origin,
@@ -209,24 +223,23 @@ const loop = new Loop(
       lightOn: lit,
       lightCri: spec.cri,
     };
-    for (const e of enemies) {
+    for (const e of level.enemies) {
       if (!e.alive) {
         e.tick(dt, ctx);
         continue;
       }
       const c = e.center;
       const lux = lit
-        ? luxOnTarget({
-          origin, axis, point: c, cd: beamCd, lumens: beamLumens, boxes,
-        })
+        ? luxOnTarget({ origin, axis, point: c, cd: beamCd, lumens: beamLumens, boxes })
         : 0;
       e.lastLux = lux;
       if (e.type !== 'moth') {
-        const mult = e.damageMultFor(spec.cri);
-        e.takeLight(dpsFromLux(lux, e.threshold), dt, mult);
+        e.takeLight(dpsFromLux(lux, e.threshold), dt, e.damageMultFor(spec.cri));
       }
       e.tick(dt, ctx);
     }
+    hud.setBoss(level.bossInfo());
+
     // Projectiles hit the hero's head when they get close.
     for (const p of projectiles) {
       if (!p.alive) continue;
@@ -243,10 +256,11 @@ const loop = new Loop(
     logTimer += dt;
     if (logTimer >= 1) {
       logTimer = 0;
-      for (const e of enemies) {
+      for (const e of level.enemies) {
         if (e.alive && e.lastLux > 0) console.log(`[dmg] ${e.name}: ${e.lastLux.toFixed(2)} лк, hp ${e.hp.toFixed(1)}`);
       }
     }
+
     particles.update(dt);
     hud.update(dt, power);
     input.endFrame();
@@ -254,4 +268,4 @@ const loop = new Loop(
   () => gfx.render()
 );
 loop.start();
-console.log('[LUMEN] stage 5 started');
+console.log('[LUMEN] stage 6 started');

@@ -27,4 +27,9 @@ export const ENEMIES = {
     contactPct: 5, highCriMin: 90, revealSec: 5, revealLen: 6, damageMultOther: 0.25,
     size: 0.1, eyeColor: '#9fe9ff',
   },
+  inkBlot: {
+    type: 'inkBlot', name: 'Чернильная Клякса', luxThreshold: 1, hp: 60, speed: 0.25,
+    contactPct: 8, block: false,
+    size: 0.22, eyeColor: '#ff4d6d',
+  },
 };
