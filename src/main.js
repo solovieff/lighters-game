@@ -21,6 +21,7 @@ import { LEVEL_1 } from './data/levels.js';
 import { Level } from './level/Level.js';
 import { SaveSystem } from './shop/SaveSystem.js';
 import { Workshop } from './shop/Workshop.js';
+import { TestRange } from './level/TestRange.js';
 import { START_MODE_INDEX, MOTH_MAX_CLING, MOTH_CLING_DIM, MOTH_DARK_RESET_SEC, LEVEL } from './core/config.js';
 import { Particles } from './fx/Particles.js';
 import { Squad } from './ai/Squad.js';
@@ -97,6 +98,11 @@ Object.assign(overlay.style, {
 });
 document.body.appendChild(overlay);
 
+// Test range (T from the menu): targets at known distances along a lane in front of the hero.
+const range = new TestRange(scene, LEVEL_1.start.x + 0.2, LEVEL_1.start.z);
+range.root.visible = false;
+let rangeMode = false;
+
 const workshopRoot = document.createElement('div');
 workshopRoot.id = 'workshop';
 Object.assign(workshopRoot.style, {
@@ -149,6 +155,14 @@ window.addEventListener('keydown', (e) => {
   }
   if (e.code === 'KeyC' && states.is(STATES.PLAYING)) power.setCharge(100); // test helper
   if (e.code === 'KeyW' && states.is(STATES.MENU)) { openWorkshop(); return; }
+  if (e.code === 'KeyT' && states.is(STATES.MENU)) {
+    rangeMode = true;
+    range.root.visible = true;
+    overlay.remove();
+    states.go(STATES.PLAYING);
+    hud.showHint('Полигон: светим вперёд, на мишенях — дальность и люкс');
+    return;
+  }
   startGame();
 });
 if (location.search.includes('play')) startGame();
@@ -294,6 +308,14 @@ const loop = new Loop(
       }
     }
 
+    if (rangeMode) {
+      range.update(
+        gfx.camera,
+        (p) => luxOnTarget({ origin, axis, point: p, cd: beamCd, lumens: beamLumens, boxes: [] }),
+        window.innerWidth,
+        window.innerHeight
+      );
+    }
     particles.update(dt);
     hud.update(dt, power);
     input.endFrame();
