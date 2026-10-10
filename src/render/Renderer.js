@@ -18,7 +18,7 @@ export class Renderer {
     this.scene.fog = new THREE.FogExp2('#010103', 0.004);
 
     this.camera = new THREE.PerspectiveCamera(
-      CAMERA.fov, window.innerWidth / window.innerHeight, 0.05, 500
+      this.fovForScreen(), window.innerWidth / window.innerHeight, 0.05, 500
     );
     this.camera.position.set(0, CAMERA.height, CAMERA.distance);
     this.camera.lookAt(0, 0, 0);
@@ -26,8 +26,19 @@ export class Renderer {
     window.addEventListener('resize', () => this.onResize());
   }
 
+  /**
+   * On a phone in landscape the screen is short, so the scene is made larger with a narrower lens.
+   * Keyboard screens keep the usual field of view.
+   */
+  fovForScreen() {
+    const touch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+    const landscape = window.innerWidth > window.innerHeight;
+    return touch && landscape ? CAMERA.fovPhone : CAMERA.fov;
+  }
+
   /** Keeps the canvas and camera aspect in sync with the window. */
   onResize() {
+    this.camera.fov = this.fovForScreen();
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(window.innerWidth, window.innerHeight);

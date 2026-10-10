@@ -54,6 +54,7 @@ export const START_MODE_INDEX = 2;
 
 export const CAMERA = {
   fov: 55,
+  fovPhone: 42,   // phone in landscape: a narrower lens makes the scene larger on a short screen
   distance: 1.6,   // behind player (m)
   height: 0.9,     // above player (m)
 };
