@@ -91,3 +91,13 @@ export const BOSS = {
   splitAt: [0.66, 0.33],    // HP fractions where the Ink Blot splits
   splitCount: 2,            // small blots per split
 };
+
+// World fill light (not the flashlight). The brief asks for almost pitch black: ambient ~0.02 and a faint blue
+// hemisphere, so the beam is the real light. Kept here, not hard-coded in main.js.
+export const WORLD_LIGHT = {
+  ambientColor: '#8090b8',
+  ambientIntensity: 0.02,
+  hemiSky: '#5a6a98',
+  hemiGround: '#202020',
+  hemiIntensity: 0.02,
+};

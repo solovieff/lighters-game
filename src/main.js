@@ -23,7 +23,7 @@ import { SaveSystem } from './shop/SaveSystem.js';
 import { Workshop } from './shop/Workshop.js';
 import { RangeLevel } from './level/RangeLevel.js';
 import { MainMenu } from './ui/MainMenu.js';
-import { START_MODE_INDEX, MOTH_MAX_CLING, MOTH_CLING_DIM, MOTH_DARK_RESET_SEC, LEVEL } from './core/config.js';
+import { START_MODE_INDEX, MOTH_MAX_CLING, MOTH_CLING_DIM, MOTH_DARK_RESET_SEC, LEVEL, WORLD_LIGHT } from './core/config.js';
 import { Particles } from './fx/Particles.js';
 import { Squad } from './ai/Squad.js';
 import { HeroHealth } from './entities/HeroHealth.js';
@@ -34,9 +34,9 @@ const { scene } = gfx;
 const input = new Input();
 const states = new StateManager(STATES.MENU);
 
-// Drawer lighting: dim fill so the floor is never pitch black. The beam is the real light.
-scene.add(new THREE.AmbientLight('#8090b8', 2.4));
-scene.add(new THREE.HemisphereLight('#5a6a98', '#202020', 2.0));
+// World fill from config (almost black by design: the beam is the real light).
+scene.add(new THREE.AmbientLight(WORLD_LIGHT.ambientColor, WORLD_LIGHT.ambientIntensity));
+scene.add(new THREE.HemisphereLight(WORLD_LIGHT.hemiSky, WORLD_LIGHT.hemiGround, WORLD_LIGHT.hemiIntensity));
 
 // Drawer floor (wood).
 import { createWoodTexture } from './assets/Textures.js';
