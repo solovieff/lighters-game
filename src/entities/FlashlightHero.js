@@ -25,7 +25,9 @@ export class FlashlightHero {
 
     // Flashlight lies horizontally: the model's +Y (head) points along the beam direction.
     // Physics still uses an upright box (see this.size); only the visual pivot is laid down.
-    this.model.rotation.z = -Math.PI / 2;
+    // Model head (+Y) lies along +Z of the pivot; pivot yaw then sets the real direction of the head.
+    // Head tip points along +Z of the pivot (flipped by PI so lookAt(beamDir) lands the head on the beam).
+    this.model.rotation.set(-Math.PI / 2, 0, Math.PI);
     this.model.position.y = this.radiusM;
     this.pivot = new THREE.Group();
     this.pivot.add(this.model);
@@ -120,13 +122,25 @@ export class FlashlightHero {
     // Free rotation in a full circle; heading is wrapped to [-π, π).
     if (aim.x !== 0) this.heading = wrapAngle(this.heading + aim.x * AIM.yawSpeed * dt);
 
+    // Beam is horizontal at head height: yaw only, full circle.
+    this.beamDir.copy(this.forwardDir());
+    this.beamDir.y = 0;
+    this.beamDir.normalize();
+
     // Apply to visuals: heading first, then lean in world space (works for any direction).
     this.pivot.position.copy(this.position);
     this.pivot.position.y += hop;
+    // Pivot yaw: model head points along beamDir (the pivot's +Z is the head direction).
     this.qHeading.setFromAxisAngle(UP, this.heading);
     this.qLean.setFromUnitVectors(UP, this.leanTiltVector());
-    // Lying flashlight: pivot yaws toward heading only (no lean for a horizontal body).
-    this.pivot.quaternion.copy(this.qHeading);
+    // Body faces the beam: the whole pivot looks along beamDir, so the lying head always points where light goes.
+    this.pivot.position.copy(this.position);
+    this.pivot.position.y += hop;
+    this.pivot.lookAt(
+      this.pivot.position.x + this.beamDir.x,
+      this.pivot.position.y,
+      this.pivot.position.z + this.beamDir.z
+    );
 
     const sy = 1 + this.squash * 0.15;
     const sxz = 1 - this.squash * 0.07;
@@ -134,19 +148,19 @@ export class FlashlightHero {
 
     // Head position and beam target (floor point in front of the hero).
     // Head is the lit end, at the horizontal tip of the lying flashlight.
-    const fwd = this.forwardDir();
-    this.headWorld.set(
-      this.position.x + fwd.x * this.lengthM * 0.5,
-      this.position.y + this.radiusM,
-      this.position.z + fwd.z * this.lengthM * 0.5
-    );
-    // Beam is horizontal at head height: yaw only, full circle. Target = point 2 m along the beam.
-    this.beamDir.copy(this.forwardDir());
-    this.beamDir.y = 0;
-    this.beamDir.normalize();
+    // Head = the real world tip of the lying model, so the beam always starts at the lens.
+    this.pivot.updateMatrixWorld(true);
+    this.model.getWorldPosition(this.headWorld);
+    this.headWorld.copy(this.headTipLocal()).applyMatrix4(this.model.matrixWorld);
+    // Beam target: 2 m along the beam from the head (beamDir computed earlier in update).
     this.beamTarget.copy(this.headWorld).addScaledVector(this.beamDir, 2);
 
     this.halo.position.set(this.position.x, this.position.y + this.radiusM * 3, this.position.z);
+  }
+
+  /** Local-space position of the model's head tip (end of the body, before the model's matrix). */
+  headTipLocal() {
+    return new THREE.Vector3(0, this.lengthM, 0);
   }
 
   /**
