@@ -224,7 +224,8 @@ const loop = new Loop(
       const move = level.allowsMovement ? input.moveAxes() : { x: 0, z: 0 };
       const jump = level.allowsMovement ? input.wasPressed('Space') : false;
       hero.update(dt, move, input.aimAxes(), level.colliders, jump);
-      rig.update(hero.position, dt, 0);
+      if (level.cameraFrame) level.cameraFrame(gfx.camera, hero.position);   // levels may frame their own view
+      else rig.update(hero.position, dt, 0);
       level.update(dt, hero.position, power, gfx.camera);
       if (level.atExit(hero.position.x) && !victoryShown) {
         victoryShown = true;
