@@ -1,6 +1,6 @@
 // On-screen controls for phones in landscape: a move stick (left), an aim stick (right) and three buttons.
 // They only feed Input (setTouchAxes / touchPress), so the game logic is the same as with the keyboard.
-const STICK = 110;   // px, the size of a stick's base
+const STICK = 96;    // px, the size of a stick's base (smaller: less of the scene is covered)
 const DEAD = 0.18;   // fraction of the radius: a light touch is ignored, so the hero does not creep
 const KNOB = 46;     // px, the knob
 
@@ -20,7 +20,7 @@ export class TouchControls {
     this.root.innerHTML = `
       <div class="tc-stick tc-move" style="${this.stickCss('left:24px;bottom:24px')}"><div class="tc-knob"></div></div>
       <div class="tc-stick tc-aim" style="${this.stickCss('right:24px;bottom:24px')}"><div class="tc-knob"></div></div>
-      <div class="tc-buttons" style="position:absolute;right:170px;bottom:30px;display:flex;gap:12px;pointer-events:auto">
+      <div class="tc-buttons" style="position:absolute;right:156px;bottom:24px;display:flex;flex-direction:column;gap:8px;pointer-events:auto">
         <button class="tc-btn" data-act="light" style="${this.btnCss()}">Свет</button>
         <button class="tc-btn" data-act="mode" style="${this.btnCss()}">Режим</button>
         <button class="tc-btn" data-act="jump" style="${this.btnCss()}">Прыжок</button>
