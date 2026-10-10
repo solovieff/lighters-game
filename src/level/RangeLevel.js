@@ -227,7 +227,7 @@ export class RangeLevel extends Level {
       g.position.set(p.x, 0, p.z);
       g.rotation.y = THREE.MathUtils.degToRad(o.angleDeg);   // face the centre
       this.root.add(g);
-      this.addTarget({ name: o.name, realM: o.realM, size: o.size }, p.x, p.z, o.labelH, this.objectSamples(g));
+      this.addTarget({ name: o.name, realM: o.realM, size: o.size }, p.x, p.z, o.labelH, this.objectSamples(g), g);
     }
 
     this.buildForestArc(centre, FOREST);
@@ -258,7 +258,7 @@ export class RangeLevel extends Level {
   }
 
   /** A target: a point at beam height on the object, plus a DOM label in real metres. */
-  addTarget(obj, x, z, labelHeight, samples = null) {
+  addTarget(obj, x, z, labelHeight, samples = null, group = null) {
     const label = document.createElement('div');
     Object.assign(label.style, {
       position: 'fixed', transform: 'translate(-50%, -100%)', pointerEvents: 'none', display: 'none',
@@ -289,6 +289,7 @@ export class RangeLevel extends Level {
       realM: obj.realM,
       pos: new THREE.Vector3(x, BEAM_HEIGHT_M, z),          // centre point (kept for the anchor and fallback)
       samples: samples ?? [new THREE.Vector3(x, BEAM_HEIGHT_M, z)],   // the readout takes the brightest (lit face counts)
+      group,                                                  // the object itself, lit by its own readout
       anchor: new THREE.Vector3(x, labelHeight, z),          // label sits above the object
       label,
       parts,
@@ -324,6 +325,21 @@ export class RangeLevel extends Level {
     return pts;
   }
 
+  /**
+   * Makes an object visible in proportion to its measured lux. The range has no beam light (that would be
+   * a second, unmeasured picture), so the object glows with the same number the label shows.
+   */
+  glowFromLux(t) {
+    if (!t.group) return;
+    const e = t.lux > 0 ? Math.min(1, 0.3 * Math.pow(t.lux, 0.3055)) : 0;
+    t.group.traverse((o) => {
+      if (o.isMesh && o.material && o.material.emissive) {
+        o.material.emissive.set('#ffd9a0');
+        o.material.emissiveIntensity = e;
+      }
+    });
+  }
+
   /** No halo and no SpotLight on the range: they would light objects outside the beam and spoil the readout. */
   get usesHalo() {
     return false;
@@ -339,7 +355,8 @@ export class RangeLevel extends Level {
     const height = window.innerHeight;
     const v = new THREE.Vector3();
     for (const t of this.targets) {
-      t.lux = Math.max(...t.samples.map((p) => this.lux(p)));   // brightest surface point the beam reaches
+      t.lux = Math.max(...t.samples.map((p) => this.lux(p)));
+      this.glowFromLux(t);   // brightest surface point the beam reaches
       v.copy(t.anchor).project(camera);
       const on = v.z < 1 && Math.abs(v.x) < 1.1 && Math.abs(v.y) < 1.1;
       t.label.style.display = on ? 'block' : 'none';
