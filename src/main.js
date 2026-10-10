@@ -126,10 +126,14 @@ function openWorkshop() {
 /** Switches to the test range: its own level, no walls, props or enemies. */
 function startRange() {
   level.dispose();
-  level = new RangeLevel(scene, { x: LEVEL_1.start.x + 0.2, z: LEVEL_1.start.z }, spec);
-  hero.position.set(LEVEL_1.start.x, 0, LEVEL_1.start.z);
+  // One start point for the hero and the range: the beam must land on the targets built from it.
+  const start = { x: 0, z: 0 };
+  level = new RangeLevel(scene, start, spec);
+  hero.position.set(start.x, 0, start.z);
+  hero.heading = 0;             // the beam points straight down the range (toward -Z)
+  hero.aimYawOffset = 0;
   states.go(STATES.PLAYING);
-  hud.showHint('Полигон: светим вперёд, на мишенях — дальность и люкс');
+  hud.showHint('Полигон: поворачивай луч стрелками, смотри на волка и край леса');
 }
 
 function startGame() {
@@ -216,7 +220,10 @@ const loop = new Loop(
 
     if (states.is(STATES.PLAYING)) {
       elapsed += dt;
-      hero.update(dt, input.moveAxes(), input.aimAxes(), level.colliders, input.wasPressed('Space'));
+      // Each level decides whether the hero may walk (the range is a shooting bench: turn only).
+      const move = level.allowsMovement ? input.moveAxes() : { x: 0, z: 0 };
+      const jump = level.allowsMovement ? input.wasPressed('Space') : false;
+      hero.update(dt, move, input.aimAxes(), level.colliders, jump);
       rig.update(hero.position, dt, 0);
       level.update(dt, hero.position, power, gfx.camera);
       if (level.atExit(hero.position.x) && !victoryShown) {

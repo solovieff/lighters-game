@@ -25,6 +25,9 @@ export class Level {
    */
   update(dt, heroPos, power, camera) {}
 
+  /** Whether the hero can walk and jump on this level (the range is a shooting bench: no). */
+  get allowsMovement() { return true; }
+
   /** Boss name and HP for the boss bar, or null. */
   bossInfo() { return null; }
 
