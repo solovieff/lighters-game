@@ -39,8 +39,8 @@ export const AIM = {
 // Faint glow around the hero so the world is never pitch black (LED spill, not a world light).
 export const HALO = {
   color: '#ffd9a0',
-  intensity: 0.25,
-  distance: 2.2,
+  intensity: 0.6,
+  distance: 3.0,
 };
 
 // Beam visuals (purely cosmetic, does not affect gameplay).

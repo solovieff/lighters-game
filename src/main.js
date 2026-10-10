@@ -35,8 +35,8 @@ const input = new Input();
 const states = new StateManager(STATES.MENU);
 
 // World: dim blue-grey fill so the floor is never pitch black. The beam is the real light.
-scene.add(new THREE.AmbientLight('#8090b8', 1.2));
-scene.add(new THREE.HemisphereLight('#4a5a88', '#101010', 1.0));
+scene.add(new THREE.AmbientLight('#8090b8', 2.4));
+scene.add(new THREE.HemisphereLight('#5a6a98', '#202020', 2.0));
 
 const woodTex = createWoodTexture(512);
 woodTex.repeat.set(4, 4);
