@@ -128,8 +128,8 @@ export const LEVEL_2 = {
   ],
 
   waves: [
-    { id: 'w1', triggerX: 1.6, enemies: [{ type: 'crawler', x: 2.0, z: 0.4 }] },
-    { id: 'w2', triggerX: 4.0, enemies: [{ type: 'crawler', x: 4.8, z: -0.3 }, { type: 'swarm', x: 5.4, z: 0.3 }] },
+    { id: 'w1', triggerX: 1.6, enemies: [{ type: 'spider', x: 2.0, z: 0.4 }] },
+    { id: 'w2', triggerX: 4.0, enemies: [{ type: 'crawler', x: 4.8, z: -0.3 }, { type: 'spider', x: 5.4, z: 0.3 }] },
   ],
 
   boss: null,

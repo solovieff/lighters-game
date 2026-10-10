@@ -19,7 +19,8 @@ import { luxOnTarget, dpsFromLux } from './light/LightDamage.js';
 import { cdAtAngle } from './light/BeamModel.js';
 import { HUD } from './ui/HUD.js';
 import { effectiveSpec } from './data/effects.js';
-import { LEVEL_1, LEVEL_2 } from './data/levels.js';
+import { LEVEL_1 } from './data/levels.js';
+import { BasementLevel } from './level/BasementLevel.js';
 import { TableLevel } from './level/TableLevel.js';
 import { SaveSystem } from './shop/SaveSystem.js';
 import { Workshop } from './shop/Workshop.js';
@@ -171,10 +172,11 @@ function restartFirstLevel() {
 }
 
 /** Starts a level from its data. Each level has its own battery, lives and start point. */
-function startLevelData(data, hint) {
+function startLevel(LevelClass, hint) {
   level.dispose();
-  level = new TableLevel(scene, data, spec, particles);
-  hero.position.set(data.start.x, 0, data.start.z);
+  level = new LevelClass(scene, spec, particles);
+  const start = level.respawnPoint;
+  hero.position.set(start.x, 0, start.z);
   hero.heading = Math.PI / 2;
   hero.aimYawOffset = 0;
   resetLevelStatus();
@@ -184,7 +186,7 @@ function startLevelData(data, hint) {
 
 function startBasement() {
   if (!states.is(STATES.MENU)) return;
-  startLevelData(LEVEL_2, 'Подвал. Пройди направо к выходу');
+  startLevel(BasementLevel, 'Подвал. Пройди направо к выходу');
 }
 
 function startGame() {

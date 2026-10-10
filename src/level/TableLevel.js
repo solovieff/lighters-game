@@ -10,6 +10,7 @@ import { Level } from './Level.js';
 import { Checkpoint } from './Checkpoints.js';
 import { Spawner } from './Spawner.js';
 import { Crawler } from '../entities/enemies/Crawler.js';
+import { Spider } from '../entities/enemies/Spider.js';
 import { Swarm } from '../entities/enemies/Swarm.js';
 import { Moth } from '../entities/enemies/Moth.js';
 import { InkBlot } from '../entities/enemies/InkBlot.js';
@@ -90,6 +91,7 @@ export class TableLevel extends Level {
     for (const d of wave.enemies) {
       if (d.type === 'crawler') this.enemies.push(new Crawler(this.scene, d.x, d.z, this.particles));
       else if (d.type === 'moth') this.enemies.push(new Moth(this.scene, d.x, d.z, this.particles));
+      else if (d.type === 'spider') this.enemies.push(new Spider(this.scene, d.x, d.z, this.particles));
     }
   }
 

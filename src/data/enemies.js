@@ -7,6 +7,11 @@ export const ENEMIES = {
     detectM: 3.0, contactPct: 8, block: true, fleeRatio: 20,
     size: 0.12, eyeColor: '#ff5a3c',
   },
+  spider: {
+    type: 'spider', name: 'Паучок', luxThreshold: 0.7, hp: 3, speed: 0.55,
+    detectM: 2.5, contactPct: 6, block: true, fleeRatio: 20,
+    size: 0.09, eyeColor: '#9be6ff',
+  },
   swarm: {
     type: 'swarm', name: 'Рой', luxThreshold: 0.5, hp: 2, speed: 0.6,
     contactPct: 3, block: false,
