@@ -213,8 +213,17 @@ document.body.appendChild(workshopRoot);
 const workshop = new Workshop(
   workshopRoot,
   (id) => console.log(`[workshop] в руке: ${id}`),
-  () => { workshop.close(); states.go(STATES.MENU); }
+  () => { workshop.close(); showMainMenu(); }
 );
+
+/** Back to the main menu from anywhere in the menus: the menu shows and the address goes back to the root. */
+function showMainMenu() {
+  workshop.close();
+  states.go(STATES.MENU);
+  menu.show();
+  hud.setHidden(true);
+  history.pushState({}, '', withBase('/'));
+}
 
 function openWorkshop() {
   if (!states.is(STATES.MENU)) return;
@@ -292,7 +301,7 @@ window.addEventListener('keydown', (e) => {
     return;
   }
   if (states.is(STATES.WORKSHOP)) {
-    if (e.code === 'Escape') { workshop.close(); menu.show(); states.go(STATES.MENU); }
+    if (e.code === 'Escape') showMainMenu();
     return;
   }
   if (e.code === 'Escape' && (states.is(STATES.PLAYING) || states.is(STATES.PAUSED))) { backToMenu(); return; }
