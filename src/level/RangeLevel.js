@@ -351,6 +351,9 @@ export class RangeLevel extends Level {
   }
 
   update(dt, heroPos, power, camera) {
+    // Specs of the current mode, shown in the labels in place of lux.
+    this.beamCd = power.cd;
+    this.beamLumens = power.lumens;
     const width = window.innerWidth;
     const height = window.innerHeight;
     const v = new THREE.Vector3();
@@ -365,10 +368,9 @@ export class RangeLevel extends Level {
       t.label.style.top = `${(-v.y * 0.5 + 0.5) * height}px`;
       t.parts.dot.style.background = brightnessColor(t.lux);
       t.parts.dot.style.boxShadow = `0 0 ${Math.min(18, 2 + t.lux * 4)}px ${brightnessColor(t.lux)}`;
-      // Total = beam + outside light. Outside light is a flat value for the whole range (see config).
-      const outside = this.outsideLux();
-      t.parts.lux.textContent = `${(t.lux + outside).toFixed(2)} лк`;
-      t.parts.split.textContent = `фонарь ${t.lux.toFixed(2)} · внешний ${outside.toFixed(2)}`;
+      // Players read candela and lumens (the flashlight's own specs), not lux. Lux stays inside the damage math.
+      t.parts.lux.textContent = `${Math.round(this.beamCd).toLocaleString('ru-RU')} кд`;
+      t.parts.split.textContent = `${Math.round(this.beamLumens).toLocaleString('ru-RU')} лм`;
     }
   }
 
