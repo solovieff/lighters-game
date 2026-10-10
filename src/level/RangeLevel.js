@@ -1,4 +1,4 @@
-// Test range: a separate level with no walls, props or enemies. The hero shines straight ahead and every target
+// Test range (Полигон): a separate level with no walls, props or enemies. Same contract as Level. The hero shines straight ahead and every target
 // is placed at a known distance (game metres) in a fan, so no target blocks another.
 // Each target shows its game distance, the real distance (ANSI FL1 scale) and the lux the beam delivers.
 import * as THREE from 'three';
@@ -7,16 +7,22 @@ import { RANGE_SCALE } from '../core/config.js';
 // Distances in game metres. Real range ~ up to 27 m (MS18), so the far end goes to 10 game m (500 real m).
 export const RANGE_DISTANCES_M = [0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0];
 
-export class TestRange {
+export class RangeLevel {
   /**
    * @param {THREE.Scene} scene
    * @param {{x:number,z:number}} heroStart where the hero stands
    */
-  constructor(scene, heroStart) {
+  constructor(scene, heroStart, lux) {
+    this.scene = scene;
     this.root = new THREE.Group();
     scene.add(this.root);
     this.targets = [];
     this.heroStart = heroStart;
+    this.colliders = [];   // no walls on the range
+    this.enemies = [];     // no enemies on the range
+    this.sparks = 0;
+    this.lux = lux;        // (point) => lux, set by main.js each frame
+    this.bossDefeated = false;
 
     // Floor for the range: plain dark board, enough to see the lit spot.
     const floor = new THREE.Mesh(
@@ -74,10 +80,10 @@ export class TestRange {
    * @param {number} width
    * @param {number} height
    */
-  update(camera, luxAt, width, height) {
+  update(camera, width, height) {
     const v = new THREE.Vector3();
     for (const t of this.targets) {
-      t.lux = luxAt(t.pos);
+      t.lux = this.lux(t.pos);
       v.copy(t.pos).project(camera);
       const on = v.z < 1 && Math.abs(v.x) < 1.1 && Math.abs(v.y) < 1.1;
       t.label.style.display = on ? 'block' : 'none';
@@ -88,4 +94,9 @@ export class TestRange {
       t.label.textContent = `${t.gameM} м (игра) · ${real.toFixed(0)} м (реально) · ${t.lux.toFixed(2)} лк`;
     }
   }
+
+  /** Same contract as Level: no boss, no exit. */
+  bossInfo() { return null; }
+  atExit() { return false; }
+  dispose() { this.scene.remove(this.root); }
 }

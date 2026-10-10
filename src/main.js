@@ -21,7 +21,7 @@ import { LEVEL_1 } from './data/levels.js';
 import { Level } from './level/Level.js';
 import { SaveSystem } from './shop/SaveSystem.js';
 import { Workshop } from './shop/Workshop.js';
-import { TestRange } from './level/TestRange.js';
+import { RangeLevel } from './level/RangeLevel.js';
 import { START_MODE_INDEX, MOTH_MAX_CLING, MOTH_CLING_DIM, MOTH_DARK_RESET_SEC, LEVEL } from './core/config.js';
 import { Particles } from './fx/Particles.js';
 import { Squad } from './ai/Squad.js';
@@ -66,10 +66,11 @@ const particles = new Particles(scene);
 const squad = new Squad();
 const health = new HeroHealth();
 
-const level = new Level(scene, LEVEL_1, particles, spec.cri);
-const boxes = level.colliders;
-// Walls and props of the current level. Empty in the test range (see rangeMode).
-const activeBoxes = () => (rangeMode ? [] : boxes);
+// The current level is the chosen one: the drawer by default, the test range with T from the menu.
+// Both expose the same contract (colliders, enemies, update, bossInfo, atExit), so main.js does not special-case them.
+let level = new Level(scene, LEVEL_1, particles, spec.cri);
+const luxFor = (origin, axis, beamCd, beamLumens) => (p) =>
+  luxOnTarget({ origin, axis, point: p, cd: beamCd, lumens: beamLumens, boxes: level.colliders });
 
 // Test dummies (photometry check from stage 4). Hidden on the level to keep the drawer clean.
 const dummies = [];
@@ -100,10 +101,6 @@ Object.assign(overlay.style, {
 });
 document.body.appendChild(overlay);
 
-// Test range (T from the menu): targets at known distances along a lane in front of the hero.
-const range = new TestRange(scene, { x: LEVEL_1.start.x + 0.2, z: LEVEL_1.start.z });
-range.root.visible = false;
-let rangeMode = false;
 
 const workshopRoot = document.createElement('div');
 workshopRoot.id = 'workshop';
@@ -123,6 +120,16 @@ function openWorkshop() {
   states.go(STATES.WORKSHOP);
   overlay.style.display = 'none';
   workshop.open();
+}
+
+/** Switches to the test range: its own level, no walls, props or enemies. */
+function startRange() {
+  level.dispose();
+  level = new RangeLevel(scene, { x: LEVEL_1.start.x + 0.2, z: LEVEL_1.start.z }, () => 0);
+  hero.position.set(LEVEL_1.start.x, 0, LEVEL_1.start.z);
+  overlay.remove();
+  states.go(STATES.PLAYING);
+  hud.showHint('Полигон: светим вперёд, на мишенях — дальность и люкс');
 }
 
 function startGame() {
@@ -158,12 +165,7 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyC' && states.is(STATES.PLAYING)) power.setCharge(100); // test helper
   if (e.code === 'KeyW' && states.is(STATES.MENU)) { openWorkshop(); return; }
   if (e.code === 'KeyT' && states.is(STATES.MENU)) {
-    rangeMode = true;
-    range.root.visible = true;
-    level.root.visible = false;   // range is its own level: no walls, props or enemies
-    overlay.remove();
-    states.go(STATES.PLAYING);
-    hud.showHint('Полигон: светим вперёд, на мишенях — дальность и люкс');
+    startRange();
     return;
   }
   startGame();
@@ -216,7 +218,7 @@ const loop = new Loop(
 
     if (states.is(STATES.PLAYING)) {
       elapsed += dt;
-      hero.update(dt, input.moveAxes(), input.aimAxes(), activeBoxes(), input.wasPressed('Space'));
+      hero.update(dt, input.moveAxes(), input.aimAxes(), level.colliders, input.wasPressed('Space'));
       rig.update(hero.position, dt, 0);
       level.update(dt, hero.position, power);
       if (level.atExit(hero.position.x) && !victoryShown) {
@@ -250,7 +252,7 @@ const loop = new Loop(
     // Each clinging moth dims the emitted light by MOTH_CLING_DIM (battery drain is unchanged).
     const dim = Math.pow(1 - MOTH_CLING_DIM, mothsClinging.length);
     beamVis.update({
-      origin, target, lumens: power.lumens * dim, cd: power.cd * dim, cct: spec.cct, on: lit, boxes: activeBoxes(),
+      origin, target, lumens: power.lumens * dim, cd: power.cd * dim, cct: spec.cct, on: lit, boxes: level.colliders,
     });
 
     // Moths leave when the light has been off for MOTH_DARK_RESET_SEC.
@@ -280,7 +282,7 @@ const loop = new Loop(
       }
       const c = e.center;
       const lux = lit
-        ? luxOnTarget({ origin, axis, point: c, cd: beamCd, lumens: beamLumens, boxes: activeBoxes() })
+        ? luxOnTarget({ origin, axis, point: c, cd: beamCd, lumens: beamLumens, boxes: level.colliders })
         : 0;
       e.lastLux = lux;
       if (e.type !== 'moth') {
@@ -311,13 +313,9 @@ const loop = new Loop(
       }
     }
 
-    if (rangeMode) {
-      range.update(
-        gfx.camera,
-        (p) => luxOnTarget({ origin, axis, point: p, cd: beamCd, lumens: beamLumens, boxes: [] }),
-        window.innerWidth,
-        window.innerHeight
-      );
+    if (level instanceof RangeLevel) {
+      level.lux = luxFor(origin, axis, beamCd, beamLumens);
+      level.update(gfx.camera, window.innerWidth, window.innerHeight);
     }
     particles.update(dt);
     hud.update(dt, power);
