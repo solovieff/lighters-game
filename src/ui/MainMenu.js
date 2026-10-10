@@ -31,6 +31,9 @@ export class MainMenu {
         <div style="font-size:14px;letter-spacing:4px;color:#7d8694;margin-top:6px;margin-bottom:38px">ФОНАРЬ, КОТОРЫЙ ПРОСНУЛСЯ</div>
         <div class="mm-items"></div>
         <div style="font-size:13px;color:#5d6470;margin-top:34px">↑ ↓ выбрать · Enter / Пробел — открыть</div>
+        <div class="mm-phone" style="display:none;font-size:14px;color:#c9a27a;margin-top:18px;max-width:340px;line-height:1.4">
+          На телефоне игра пока не работает: управление только с клавиатуры. Нужен экранный джойстик — в разработке.
+        </div>
       </div>`;
     this.list = this.root.querySelector('.mm-items');
     this.renderItems();
@@ -92,6 +95,9 @@ export class MainMenu {
 
   show() {
     this.visible = true;
+    const touch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+    const note = this.root.querySelector('.mm-phone');
+    if (note) note.style.display = touch ? 'block' : 'none';
     this.root.style.display = 'flex';
     window.addEventListener('keydown', this.onKey);
   }
