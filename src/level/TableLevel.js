@@ -82,6 +82,23 @@ export class TableLevel extends Level {
     for (const c of data.checkpoints) this.checkpoints.push(new Checkpoint(this.root, c));
   }
 
+  /**
+   * After the battery dies every enemy comes back on its spawn point, the same as at the start of the level.
+   * Drops the old bodies (and their attack tokens), then re-arms every wave.
+   */
+  resetEnemies() {
+    for (const e of this.enemies) this.scene.remove(e.group);
+    this.enemies = [];
+    this.boss = null;
+    this.squad && this.squad.tokens && this.squad.tokens.clear();
+    // Put every wave back on the field right away: enemies stand on their spawn points, as at the start.
+    for (const w of this.spawner.waves) {
+      w.done = false;
+      this.spawnWave(w);
+      w.done = true;   // spawned now, so the trigger does not spawn it a second time
+    }
+  }
+
   /** Spawns one wave: swarms as a group, the rest one by one. */
   spawnWave(wave) {
     const swarms = wave.enemies.filter((d) => d.type === 'swarm');

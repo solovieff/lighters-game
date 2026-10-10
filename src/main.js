@@ -229,7 +229,7 @@ function backToMenu() {
 
 // Debug hook for live checks (read-only snapshot + kill the battery). Not a game feature.
 window.__lumen = {
-  state: () => ({ state: states.state, dead: power.dead, charge: power.charge, lives, deadTimer, hero: hero.position.toArray() }),
+  state: () => ({ state: states.state, dead: power.dead, charge: power.charge, lives, deadTimer, hero: hero.position.toArray(), enemiesAlive: level.enemies ? level.enemies.filter((e) => e.alive).length : 0, wavesArmed: level.spawner ? level.spawner.waves.filter((w) => !w.done).length : 0 }),
   kill: () => { power.die(); },
 };
 
@@ -271,6 +271,8 @@ function spawnProjectile(from, dir, pct) {
 
 /** Respawn after the battery dies: back to the last charging station with a full charge. */
 function respawn() {
+  level.resetEnemies();          // every enemy returns to its spawn point (the squad tokens too)
+  squad.tokens.clear();
   hero.position.set(level.respawnPoint.x, 0, level.respawnPoint.z);
   hero.hopT = 0;        // stop any hop in progress: the hero lands at the station
   hero.hopElapsed = 0;

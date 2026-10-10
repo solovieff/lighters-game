@@ -32,6 +32,8 @@ export class Level {
   get allowsMovement() { return true; }
   /** Whether the battery drains here (the range is a shooting bench: no drain, no death). */
   get drainsBattery() { return true; }
+  /** Called after the battery dies: enemies return to their spawn points. Levels without enemies do nothing. */
+  resetEnemies() {}
 
   /** Boss name and HP for the boss bar, or null. */
   bossInfo() { return null; }
