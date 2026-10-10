@@ -130,7 +130,7 @@ const LEVELS = {
   drawer: {
     data: LEVEL_1,
     make: () => new TableLevel(scene, LEVEL_1, spec, particles),
-    path: 'level',
+    path: 'table',
     hint: 'Ящик стола. Пройди направо к выходу',
   },
   basement: {
@@ -315,10 +315,10 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyC' && states.is(STATES.PLAYING)) power.setCharge(100); // test helper
 });
 // Start on the main menu. Test URLs skip it: ?range or ?play
-// Start target from the URL: /range, /level, /workshop, or the menu for /.
+// Start target from the URL: /range, /table, /basement, /workshop, or the menu for /.
 const route = resolveRoute();
 if (route === 'range') { hud.setHidden(false); startRange(); }
-else if (route === 'level') runLevel('drawer');
+else if (route === 'table') runLevel('drawer');
 else if (route === 'basement') runLevel('basement');
 else if (route === 'workshop') openWorkshop();
 else menu.show();

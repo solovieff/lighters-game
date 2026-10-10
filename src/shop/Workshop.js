@@ -55,8 +55,23 @@ const STYLE = `
   .ws-stat .k { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #7d8694; }
   .ws-stat .v { font-size: 16px; color: #e6dfcf; margin-top: 2px; }
   .ws-subtitle { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #7d8694; margin: 14px 0 6px; }
-  .ws-mode { font-size: 13px; color: #c9c4b8; padding: 3px 0; }
+  .ws-mode-row { display: grid; grid-template-columns: minmax(0,1fr) 92px 84px 62px 84px; gap: 10px; align-items: center;
+    font-size: 13px; color: #c9c4b8; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .ws-mode-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .ws-mode-name { white-space: nowrap; }
+  .ws-mode-src { padding-left: 10px; }
   .ws-mod { font-size: 13px; color: #c9c4b8; padding: 4px 0; }
+  .ws-mod-row { display: grid; grid-template-columns: minmax(0,1fr) 110px 86px 96px; gap: 10px; align-items: center;
+    font-size: 13px; color: #c9c4b8; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .ws-mod-name, .ws-mod-status { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ws-mod-action { text-align: right; }
+  .ws-mod-status { text-align: left; }
+  .ws-mod-src { padding-left: 4px; }
+  .ws-owned { display: inline-block; padding: 5px 12px; border-radius: 8px; font-size: 12px; letter-spacing: 1px;
+    text-transform: uppercase; color: #9be6b0; border: 1px solid rgba(120,220,150,0.45);
+    background: rgba(120,220,150,0.12); pointer-events: none; user-select: none; cursor: default; }
+  .ws-price-tag { color: #c9a27a; }
+  .ws-btn-small { margin-top: 0; padding: 6px 14px; font-size: 13px; }
   .ws-btn { margin-top: 8px; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 15px;
     border: 1px solid #ffb36b; background: rgba(255,160,80,0.14); color: #ffe9c8; }
   .ws-btn:hover { background: rgba(255,160,80,0.26); }
@@ -144,7 +159,13 @@ export class Workshop {
     const top = f.modes.reduce((a, b) => (b.lumens > a.lumens ? b : a));
     const sum = summarizeSpec(f);
     const modeRows = f.modes.map((m) =>
-      `<div class="ws-mode">${m.name}: ${m.lumens} лм · ${m.cd} кд · ${(m.runtimeMin / 60).toFixed(1)} ч ${tag(m.source)}</div>`
+      `<div class="ws-mode-row">
+        <div class="ws-mode-name">${m.name}</div>
+        <div class="ws-mode-num">${m.lumens.toLocaleString('ru-RU')} лм</div>
+        <div class="ws-mode-num">${m.cd.toLocaleString('ru-RU')} кд</div>
+        <div class="ws-mode-num">${(m.runtimeMin / 60).toFixed(1)} ч</div>
+        <div class="ws-mode-src">${tag(m.source)}</div>
+      </div>`
     ).join('');
 
     const mods = modsFor(f.id, f.brand);
@@ -152,9 +173,18 @@ export class Workshop {
       ? mods.map((m) => {
         const has = SaveSystem.hasMod(m.id);
         const free = m.price === 0;
-        const label = has ? 'куплено' : (free ? 'бесплатно' : `${m.price} Искр`);
-        return `<div class="ws-mod">${m.name} — ${label} ${tag(m.source)}
-          ${owned && !has ? `<button class="ws-btn" data-mod="${m.id}" data-price="${m.price}">Купить</button>` : ''}</div>`;
+        const status = has
+          ? '<span class="ws-owned">куплено</span>'
+          : `<span class="ws-price-tag">${free ? 'бесплатно' : `${m.price} Искр`}</span>`;
+        const action = has
+          ? ''
+          : (owned ? `<button class="ws-btn ws-btn-small" data-mod="${m.id}" data-price="${m.price}">Купить</button>` : '');
+        return `<div class="ws-mod-row">
+          <div class="ws-mod-name">${m.name}</div>
+          <div class="ws-mod-status">${status}</div>
+          <div class="ws-mod-src">${tag(m.source)}</div>
+          <div class="ws-mod-action">${action}</div>
+        </div>`;
       }).join('')
       : '<div class="ws-mod">Модов нет</div>';
 

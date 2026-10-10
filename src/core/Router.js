@@ -1,13 +1,14 @@
 // Tiny router: maps the URL path to a start target, so each mode has its own address.
 //   /            main menu (Уровень / Мастерская / Полигон, mouse or keyboard)
-//   /level       level "Ящик стола"
+//   /table       level "Ящик стола" (old address /level still works)
 //   /workshop    workshop (lights, purchases, mods)
 //   /range       test range (Полигон)
 //   /basement    level 2 "Подвал"
 // Old query flags (?range, ?play) still work for quick checks.
 export const ROUTES = {
   '/': 'menu',
-  '/level': 'level',
+  '/table': 'table',
+  '/level': 'table',   // old alias
   '/workshop': 'workshop',
   '/range': 'range',
   '/basement': 'basement',
@@ -19,7 +20,7 @@ export function resolveRoute(loc = window.location) {
   if (ROUTES[path]) return ROUTES[path];
   // legacy query flags
   if (loc.search.includes('range')) return 'range';
-  if (loc.search.includes('play')) return 'level';
+  if (loc.search.includes('play')) return 'table';
   return 'menu';
 }
 
