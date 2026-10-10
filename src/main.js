@@ -160,6 +160,15 @@ function startRange() {
   hud.showHint('Полигон: поворачивай луч стрелками, смотри на волка и край леса');
 }
 
+/** Game over: the first level again, from its start, with full lives and battery. */
+function restartFirstLevel() {
+  level.dispose();
+  level = new TableLevel(scene, LEVEL_1, spec, particles);
+  hero.position.set(LEVEL_1.start.x, 0, LEVEL_1.start.z);
+  resetLevelStatus();
+  hud.showHint('Жизни закончились. Начинаем с первого уровня');
+}
+
 function startGame() {
   if (!states.is(STATES.MENU)) return;
   resetLevelStatus();
@@ -305,8 +314,8 @@ const loop = new Loop(
         lives -= 1;
         hud.setLives(lives);
         if (lives <= 0) {
-          hud.setOverlay({ title: 'Конец', lines: ['Жизни закончились'], footer: 'Esc — пауза' });
-          states.go(STATES.GAMEOVER);
+          // No lives left: back to the first level from the start, with full lives and battery.
+          restartFirstLevel();
         } else {
           respawn();
         }
