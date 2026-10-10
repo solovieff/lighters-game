@@ -12,8 +12,7 @@ export const LEVEL_1 = {
 
   // Props: pencils are logs across the lane, coins are stacked platforms, paper is a stack, ruler and clip are metal.
   props: [
-    { kind: 'pencil', x: 0.6, z: 0.0 },
-    { kind: 'eraser', x: 1.05, z: -0.35 },
+    { kind: 'pencil', x: 0.6, z: 0.0, eraserEnd: 'pos' },   // the pencil has its own eraser on one end
     { kind: 'coin', x: 1.45, z: 0.2, count: 2 },
     { kind: 'paper', x: 1.85, z: -0.3 },
     { kind: 'coin', x: 2.2, z: 0.35, count: 2 },
@@ -36,27 +35,22 @@ export const LEVEL_1 = {
     { id: 'boss', x: 2.95, z: -0.45 },
   ],
 
-  // Enemy waves: each one spawns once when the hero passes triggerX.
+  // Enemy waves: only the weakest crawlers, a couple of them, and only as a light-tested warm-up.
+  // The main path is about running through the drawer and collecting, not fighting.
   waves: [
-    { id: 'w1', triggerX: 0.3, enemies: [
-      { type: 'crawler', x: 1.2, z: 0.4 },
-      { type: 'crawler', x: 1.5, z: -0.45 },
-    ] },
-    { id: 'w2', triggerX: 1.6, enemies: [
-      { type: 'swarm', x: 2.2, z: 0.0 },
-      { type: 'swarm', x: 2.3, z: 0.2 },
-      { type: 'swarm', x: 2.1, z: -0.2 },
-    ] },
-    { id: 'w3', triggerX: 2.4, enemies: [
-      { type: 'moth', x: 2.7, z: 0.0 },
-      { type: 'crawler', x: 2.9, z: -0.35 },
+    { id: 'w1', triggerX: 1.2, enemies: [
+      { type: 'crawler', x: 1.7, z: 0.45 },
+      { type: 'crawler', x: 2.6, z: -0.45 },
     ] },
   ],
 
-  // Boss: Ink Blot, starts at triggerX and sits at the end of the drawer.
-  boss: { type: 'inkBlot', triggerX: 2.5, x: 3.25, z: 0.0 },
+  // No boss in the drawer: the exit opens when the hero reaches the end (see TableLevel.atExit).
+  boss: null,
 
-  // Exit: opens after the boss is defeated.
+  // Mouse quest: shine into the left corner, a mouse runs out and eats the pencil.
+  quest: { id: 'mouse', lightTargetX: -0.3, lightTargetZ: -0.6, mouseStart: { x: -0.4, z: -0.6 }, eatsPropIndex: 0 },
+
+  // Exit: at the far end of the drawer.
   exit: { x: 3.95 },
 
   // Tutorial hints, shown once each when the hero passes X.

@@ -13,6 +13,7 @@ import { Crawler } from '../entities/enemies/Crawler.js';
 import { Swarm } from '../entities/enemies/Swarm.js';
 import { Moth } from '../entities/enemies/Moth.js';
 import { InkBlot } from '../entities/enemies/InkBlot.js';
+import { MouseQuest } from './MouseQuest.js';
 
 export class TableLevel extends Level {
   /**
@@ -36,6 +37,17 @@ export class TableLevel extends Level {
     this.hints = data.hints.map((h) => ({ ...h, shown: false }));
     this.spawner = new Spawner(data.waves);
     this.boss = null;
+    // Mouse quest: only if the level data asks for it. The pencil it eats is the one with the eraser.
+    const pencil = data.props.find((p) => p.kind === 'pencil');
+    this.pencilAt = pencil ? { x: pencil.x, z: pencil.z } : null;
+    this.mouse = data.quest && this.pencilAt ? new MouseQuest(this.root, data.quest, this.pencilAt) : null;
+    if (this.mouse) {
+      // When the mouse is done, the pencil and its eraser disappear from the drawer.
+      this.mouse.onEaten = () => {
+        this.root.children.filter((c) => c.name === 'pencil' || c.name === 'pencil-eraser').forEach((c) => c.visible = false);
+        this.pencilGone = true;
+      };
+    }
     this.bossDefeated = false;
     this.sparks = 0;
     this.respawnPoint = { x: data.start.x, z: data.start.z };
@@ -86,7 +98,8 @@ export class TableLevel extends Level {
    */
   update(dt, heroPos, power) {
     for (const w of this.spawner.update(heroPos.x)) this.spawnWave(w);
-    if (!this.boss && heroPos.x >= this.data.boss.triggerX) this.spawnBoss();
+    if (this.mouse) this.mouse.update(dt, this.lux || (() => 0), this.pencilAt);
+    if (this.data.boss && !this.boss && heroPos.x >= this.data.boss.triggerX) this.spawnBoss();
 
     for (const h of this.hints) {
       if (!h.shown && heroPos.x >= h.x) {
@@ -110,6 +123,10 @@ export class TableLevel extends Level {
       }
     }
 
+    if (!this.data.boss && !this.bossDefeated) {
+      this.bossDefeated = true;   // no boss in this level: the exit opens from the start
+      this.exit.open();
+    }
     if (this.boss && !this.boss.alive && !this.bossDefeated) {
       this.bossDefeated = true;
       this.exit.open();

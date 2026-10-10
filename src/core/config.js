@@ -103,7 +103,6 @@ export const WORLD_LIGHT = {
   levels: [
     { name: 'Темно', lux: 0 },
     { name: 'Сумерки', lux: 1 },
-    { name: 'Светло', lux: 10000 },
   ],
   luxToRender: 1.2,
   luxExponent: 0.3055,   // intensity = 1.2 * lux^0.3055: 1 lx -> 1.2 (dusk), 10 000 lx -> 20 (day), both checked by screenshot
