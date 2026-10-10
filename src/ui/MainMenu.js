@@ -36,23 +36,28 @@ export class MainMenu {
     this.renderItems();
   }
 
+  /** Applies the selected / idle look to one row element. */
+  styleRow(row, sel) {
+    Object.assign(row.style, {
+      border: `1px solid ${sel ? '#ffb36b' : 'rgba(255,255,255,0.08)'}`,
+      background: sel ? 'linear-gradient(90deg, rgba(255,160,80,0.18), rgba(255,160,80,0.02))' : 'rgba(255,255,255,0.02)',
+      boxShadow: sel ? '0 0 22px rgba(255,160,80,0.25)' : 'none',
+    });
+    row.querySelector('.mm-title-row').style.color = sel ? '#ffe9c8' : '#a9a396';
+  }
+
   renderItems() {
     this.list.innerHTML = '';
     this.items.forEach((it, i) => {
-      const sel = i === this.index;
       const row = document.createElement('div');
       row.dataset.id = it.id;
-      Object.assign(row.style, {
-        margin: '10px 0', padding: '14px 28px', cursor: 'pointer', borderRadius: '10px',
-        border: `1px solid ${sel ? '#ffb36b' : 'rgba(255,255,255,0.08)'}`,
-        background: sel ? 'linear-gradient(90deg, rgba(255,160,80,0.18), rgba(255,160,80,0.02))' : 'rgba(255,255,255,0.02)',
-        boxShadow: sel ? '0 0 22px rgba(255,160,80,0.25)' : 'none',
-        transition: 'all 0.15s ease',
-      });
+      Object.assign(row.style, { margin: '10px 0', padding: '14px 28px', cursor: 'pointer', borderRadius: '10px', transition: 'all 0.15s ease' });
       row.innerHTML = `
-        <div style="font-size:26px;color:${sel ? '#ffe9c8' : '#a9a396'}">${it.title}</div>
+        <div class="mm-title-row" style="font-size:26px"></div>
         <div style="font-size:13px;color:#7d8694;margin-top:4px">${it.sub}</div>`;
-      row.onmouseenter = () => { this.index = i; this.renderItems(); };
+      row.querySelector('.mm-title-row').textContent = it.title;
+      this.styleRow(row, i === this.index);
+      row.onmouseenter = () => { this.setIndex(i); };   // hover only moves the highlight; rows are not rebuilt
       row.onclick = () => { this.index = i; this.choose(); };   // click picks the row that was clicked
       this.list.appendChild(row);
     });
@@ -71,6 +76,13 @@ export class MainMenu {
     else if (e.code === 'Enter' || e.code === 'Space') this.choose();
     else return;
     e.preventDefault();
+  }
+
+  /** Moves the highlight to row i by restyling existing rows (no re-render, so clicks are not lost). */
+  setIndex(i) {
+    if (i === this.index) return;
+    this.index = i;
+    [...this.list.children].forEach((row, k) => this.styleRow(row, k === i));
   }
 
   move(d) {
