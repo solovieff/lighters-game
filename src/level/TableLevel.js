@@ -44,7 +44,14 @@ export class TableLevel extends Level {
     if (this.mouse) {
       // When the mouse is done, the pencil and its eraser disappear from the drawer.
       this.mouse.onEaten = () => {
-        this.root.children.filter((c) => c.name === 'pencil' || c.name === 'pencil-eraser').forEach((c) => c.visible = false);
+        // Hide the pencil and its eraser AND remove their colliders: the hero must not need to jump over them any more.
+        const gone = this.root.children.filter((c) => c.name === 'pencil' || c.name === 'pencil-eraser');
+        const dead = new Set();
+        for (const c of gone) {
+          c.visible = false;
+          if (c.userData.collider) dead.add(c.userData.collider);
+        }
+        this.colliders = this.colliders.filter((col) => !dead.has(col));
         this.pencilGone = true;
       };
     }
