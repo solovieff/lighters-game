@@ -166,11 +166,23 @@ bus.on('bossDefeated', () => console.log('[boss] Чернильная Клякс
 bus.on('heroHit', ({ pct, source }) => console.log(`[hit] ${source}: −${pct}%`));
 bus.on('enemyDied', ({ type }) => console.log(`[enemy] died: ${type}`));
 
+// Back to the main menu from anywhere: used by Esc in the workshop, and by Esc in the game (via pause).
+function backToMenu() {
+  level.dispose();
+  level = new TableLevel(scene, LEVEL_1, spec, particles);   // the drawer, ready for the next pick
+  hero.position.set(LEVEL_1.start.x, 0, LEVEL_1.start.z);
+  states.go(STATES.MENU);
+  hud.setHidden(true);
+  history.pushState({}, '', '/');
+  menu.show();
+}
+
 window.addEventListener('keydown', (e) => {
   if (states.is(STATES.WORKSHOP)) {
     if (e.code === 'Escape') { workshop.close(); menu.show(); states.go(STATES.MENU); }
     return;
   }
+  if (e.code === 'Escape' && (states.is(STATES.PLAYING) || states.is(STATES.PAUSED))) { backToMenu(); return; }
   if (e.code === 'KeyC' && states.is(STATES.PLAYING)) power.setCharge(100); // test helper
 });
 // Start on the main menu. Test URLs skip it: ?range or ?play
