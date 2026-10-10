@@ -96,8 +96,16 @@ export const BOSS = {
 // hemisphere, so the beam is the real light. Kept here, not hard-coded in main.js.
 export const WORLD_LIGHT = {
   ambientColor: '#8090b8',
-  ambientIntensity: 0.02,
   hemiSky: '#5a6a98',
   hemiGround: '#202020',
-  hemiIntensity: 0.02,
+  // Levels cycled with L. Multiplier on the base intensities below.
+  levels: [
+    { name: 'Темно', mul: 0 },
+    { name: 'Сумерки', mul: 0.05 / 0.02 },
+    { name: 'Мягко', mul: 0.2 / 0.02 },
+    { name: 'Светло', mul: 0.6 / 0.02 },
+  ],
+  ambientBase: 0.02,
+  hemiBase: 0.02,
+  startLevel: 0,
 };

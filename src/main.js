@@ -1,7 +1,7 @@
 // Stage 6: level 1 "Ящик стола". The hero walks from the start along +X to the exit.
 // Light, enemies and HUD from stages 4–5; this stage adds the level runtime, pickups, checkpoints,
 // waves, tutorial hints, the Ink Blot boss and the victory screen.
-// Keyboard only: WASD move, Space jump, arrows turn the beam, Q/E modes, L light on/off, C refill (test), Esc pause.
+// Keyboard only: WASD move, Space jump, arrows turn the beam, Q/E modes, L outside light level, C refill (test), Esc pause.
 import * as THREE from 'three';
 import { Renderer } from './render/Renderer.js';
 import { CameraRig } from './render/CameraRig.js';
@@ -35,8 +35,20 @@ const input = new Input();
 const states = new StateManager(STATES.MENU);
 
 // World fill from config (almost black by design: the beam is the real light).
-scene.add(new THREE.AmbientLight(WORLD_LIGHT.ambientColor, WORLD_LIGHT.ambientIntensity));
-scene.add(new THREE.HemisphereLight(WORLD_LIGHT.hemiSky, WORLD_LIGHT.hemiGround, WORLD_LIGHT.hemiIntensity));
+const worldAmbient = new THREE.AmbientLight(WORLD_LIGHT.ambientColor, WORLD_LIGHT.ambientBase);
+const worldHemi = new THREE.HemisphereLight(WORLD_LIGHT.hemiSky, WORLD_LIGHT.hemiGround, WORLD_LIGHT.hemiBase);
+scene.add(worldAmbient, worldHemi);
+let worldLevel = WORLD_LIGHT.startLevel;
+
+/** Applies one world-light level to both lamps. */
+function setWorldLight(index) {
+  worldLevel = (index + WORLD_LIGHT.levels.length) % WORLD_LIGHT.levels.length;
+  const lv = WORLD_LIGHT.levels[worldLevel];
+  worldAmbient.intensity = WORLD_LIGHT.ambientBase * lv.mul;
+  worldHemi.intensity = WORLD_LIGHT.hemiBase * lv.mul;
+  bus.emit('worldLight', { name: lv.name, index: worldLevel });
+}
+setWorldLight(worldLevel);
 
 // Drawer floor (wood).
 import { createWoodTexture } from './assets/Textures.js';
@@ -172,7 +184,7 @@ if (location.search.includes('range')) { hud.setHidden(false); startRange(); }
 else if (location.search.includes('play')) startGame();
 else menu.show();
 // Hide the in-game HUD while the menu is on screen.
-hud.setHidden(true);
+if (!location.search.includes('range') && !location.search.includes('play')) hud.setHidden(true);   // menu only
 
 /** Hit the hero from an enemy: applies charge loss with invulnerability and knockback. */
 function hitHero(pct, fromPos, source) {
@@ -214,7 +226,7 @@ function showVictory() {
 
 const loop = new Loop(
   (dt) => {
-    if (input.wasPressed('KeyL')) power.toggle();
+    if (input.wasPressed('KeyL')) setWorldLight(worldLevel + 1);   // L cycles the outside light
     if (input.wasPressed('KeyQ')) power.nextMode();
     if (input.wasPressed('KeyE')) power.prevMode();
 

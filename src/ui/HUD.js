@@ -38,7 +38,7 @@ export class HUD {
       right: '12px', top: '10px', color: '#7d8694', font: '13px monospace', textAlign: 'right',
     });
     this.controls.textContent =
-      'WASD ходьба · Пробел прыжок · стрелки луч · Q/E режим · L свет · C заряд (тест) · Esc пауза';
+      'WASD ходьба · Пробел прыжок · стрелки луч · Q/E режим · L внешний свет · C заряд (тест) · Esc пауза';
 
     this.bossBox = makeBlock({
       left: '50%', top: '10px', transform: 'translateX(-50%)', width: '420px', display: 'none',
@@ -57,6 +57,8 @@ export class HUD {
       justifyContent: 'center', background: 'rgba(0,0,0,0.6)', textAlign: 'center',
     });
 
+    this.worldLightName = 'Темно';
+    bus.on('worldLight', ({ name }) => { this.worldLightName = name; });
     bus.on('stepDown', ({ step }) => this.showNotice(`СТУПЕНЬ ВНИЗ → ${step + 1}`));
     bus.on('overheat', () => this.showNotice('ПЕРЕГРЕВ'));
     bus.on('lvp', () => this.showNotice('LVP'));
@@ -155,6 +157,7 @@ export class HUD {
       `Режим:       ${modeLabel}  ${p.on ? '' : '[выкл]'}\n` +
       `Свет:        ${Math.round(p.lumens)} лм · ${Math.round(p.cd)} кд\n` +
       `Дальность:   ${throwText}\n` +
+      `Внешний свет: ${this.worldLightName}\n` +
       `Искры: ${this.sparks}   Жизни: ${this.lives}`;
   }
 }
