@@ -60,15 +60,35 @@ setWorldLight(worldLevel);
 
 // Hero and light systems.
 // The flashlight the player chose in the Workshop, with its installed mods applied (copy, specs untouched).
-const saved = SaveSystem.load();
-const spec = effectiveSpec(saved.active, saved.mods);
-console.log(`[loadout] ${spec.brand} ${spec.model}, модов: ${saved.mods.length}`);
-spec.flags.pendingEffects.forEach((p) => console.log(`[loadout] не применено: ${p}`));
-const hero = new FlashlightHero(scene, spec.id);
+/** The flashlight the player chose in the Workshop, with its mods (a copy, the specs are not touched). */
+function loadout() {
+  const saved = SaveSystem.load();
+  const s = effectiveSpec(saved.active, saved.mods);
+  console.log(`[loadout] ${s.brand} ${s.model}, модов: ${saved.mods.length}`);
+  s.flags.pendingEffects.forEach((p) => console.log(`[loadout] не применено: ${p}`));
+  return s;
+}
+let spec = loadout();
+let hero = new FlashlightHero(scene, spec.id);
 hero.position.set(LEVEL_1.start.x, 0, LEVEL_1.start.z);
 const rig = new CameraRig(gfx.camera);
-const power = new PowerSystem(spec, START_MODE_INDEX);
-const beamVis = new BeamVisual(scene);
+let power = new PowerSystem(spec, START_MODE_INDEX);
+let beamVis = new BeamVisual(scene);
+
+/**
+ * Rebuilds the hero around the chosen flashlight (its model, beam and battery) when it changed.
+ * Called before every level start, so a Workshop choice is in the game at once, no reload.
+ */
+function applyLoadout() {
+  const next = loadout();
+  if (next.id === spec.id) return;   // same body: nothing to rebuild
+  hero.dispose?.();
+  beamVis.dispose?.();
+  spec = next;
+  hero = new FlashlightHero(scene, spec.id);
+  power = new PowerSystem(spec, START_MODE_INDEX);
+  beamVis = new BeamVisual(scene);
+}
 const hud = new HUD(bus);
 const particles = new Particles(scene);
 const squad = new Squad();
@@ -129,6 +149,7 @@ const CAMPAIGN = ['drawer', 'basement'];
  */
 function runLevel(label, hint = LEVELS[label].hint) {
   const cfg = LEVELS[label];
+  applyLoadout();                    // the flashlight chosen in the Workshop is the one in the level
   level.dispose();
   level = cfg.make();
   const start = level.respawnPoint;
@@ -186,7 +207,7 @@ const workshopRoot = document.createElement('div');
 workshopRoot.id = 'workshop';
 Object.assign(workshopRoot.style, {
   position: 'fixed', inset: '0', display: 'none', alignItems: 'center', justifyContent: 'center',
-  background: 'rgba(8,9,12,0.92)', color: '#ddd', font: '15px sans-serif', zIndex: '10',
+  background: 'rgb(8,9,12)', color: '#ddd', font: '15px sans-serif', zIndex: '15',   // opaque, above the HUD
 });
 document.body.appendChild(workshopRoot);
 const workshop = new Workshop(

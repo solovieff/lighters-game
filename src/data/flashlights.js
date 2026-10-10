@@ -6,7 +6,8 @@ export const FLASHLIGHTS = [
   {
     id: 'convoy_s2plus_sst40', brand: 'Convoy', model: 'S2+ SST40',
     role: 'Стартовый. Бюджетная легенда, удобен для модов.',
-    price: 0, emitter: 'Luminus SST40', emitterType: 'LED', cct: 6500, cri: 70, criSource: 'assumption',
+    price: 0,   // test phase: free
+    emitter: 'Luminus SST40', emitterType: 'LED', cct: 6500, cri: 70, criSource: 'assumption',
     battery: { format: '18650', mAh: 3000, rechargeable: true, onboardCharging: false, source: 'assumption' },
     massG: 120, massSource: 'estimate (76 g body + cell)',
     lengthMm: 118, headMm: 24.1, bodyMm: 22,
@@ -27,7 +28,8 @@ export const FLASHLIGHTS = [
   {
     id: 'maglite_ml300l_3d', brand: 'Maglite', model: 'ML300L 3D',
     role: 'Танк. Тяжёлый, не заряжается, зато фокусировка, огромное время работы и ломает всё.',
-    price: 550, emitter: 'LED', emitterType: 'LED', cct: 5000, cri: 70, criSource: 'assumption',
+    price: 0,   // test phase: free
+    emitter: 'LED', emitterType: 'LED', cct: 5000, cri: 70, criSource: 'assumption',
     battery: { format: '3 × D (alkaline)', mAh: 15000, rechargeable: false, onboardCharging: false,
                source: 'official (count and type), mAh — estimate' },
     massG: 748, massSource: 'official',
@@ -48,7 +50,8 @@ export const FLASHLIGHTS = [
   {
     id: 'fireflies_x1q_core', brand: 'Fireflies', model: 'X1Q Core', nickname: 'Ядро',
     role: 'Ядро. Компактный 21700 на Anduril 2: ровный свет до самого разряда, CRI 95 — видит Невидимок и цветные метки.',
-    price: 900, emitter: 'FFL707A 5000K CRI95', emitterType: 'LED', cct: 5000, cri: 95, criSource: 'official',
+    price: 0,   // test phase: free
+    emitter: 'FFL707A 5000K CRI95', emitterType: 'LED', cct: 5000, cri: 95, criSource: 'official',
     battery: { format: '21700 (unprotected, flat-top)', mAh: 5000, rechargeable: true, onboardCharging: false,
                source: 'official (format), mAh — assumption' },
     massG: 158, massSource: 'review 1Lumen (89 g without cell — official)',
@@ -73,7 +76,8 @@ export const FLASHLIGHTS = [
   {
     id: 'fireflies_l70_helios', brand: 'Fireflies', model: 'L70 Helios', nickname: 'Гелиос',
     role: 'Гелиос. Г-образный: светит вбок, магниты на хвосте и сбоку, настраиваемый термопотолок.',
-    price: 1000, emitter: 'FFL707A 6500K', emitterType: 'LED', cct: 6500, cri: 70, criSource: 'assumption',
+    price: 0,   // test phase: free
+    emitter: 'FFL707A 6500K', emitterType: 'LED', cct: 6500, cri: 70, criSource: 'assumption',
     battery: { format: '21700 (unprotected, flat-top)', mAh: 5000, rechargeable: true, onboardCharging: false,
                source: 'official (format), mAh — assumption' },
     massG: 162, massSource: 'estimate (92 g without cell — official, + ~70 g cell)',
@@ -98,7 +102,8 @@ export const FLASHLIGHTS = [
   {
     id: 'fireflies_x4q_comet', brand: 'Fireflies', model: 'X4Q Comet', nickname: 'Комета',
     role: 'Комета. Четыре светодиода, мощная заливка в крошечном корпусе, сменная оптика.',
-    price: 1100, emitter: '4 × Luminus SST25 6500K', emitterType: 'LED', cct: 6500, cri: 70, criSource: 'official (≈70)',
+    price: 0,   // test phase: free
+    emitter: '4 × Luminus SST25 6500K', emitterType: 'LED', cct: 6500, cri: 70, criSource: 'official (≈70)',
     battery: { format: '21700 (unprotected, flat-top)', mAh: 5000, rechargeable: true, onboardCharging: false,
                source: 'official (format), mAh — assumption' },
     massG: 160, massSource: 'review 1Lumen (85 g without cell — official)',
@@ -123,7 +128,8 @@ export const FLASHLIGHTS = [
   {
     id: 'fireflies_x4_stellar', brand: 'Fireflies', model: 'X4 Stellar', nickname: 'Звёздный',
     role: 'Звёздный. Четыре светодиода, встроенная магнитная зарядка USB-C, работает как пауэрбанк.',
-    price: 1300, emitter: '4 × Luminus SFT25R 6500K', emitterType: 'LED', cct: 6500, cri: 70, criSource: 'official (≈70)',
+    price: 0,   // test phase: free
+    emitter: '4 × Luminus SFT25R 6500K', emitterType: 'LED', cct: 6500, cri: 70, criSource: 'official (≈70)',
     battery: { format: '21700 (unprotected, flat-top)', mAh: 5000, rechargeable: true, onboardCharging: true, powerbank: true,
                source: 'official (format, 10 W magnetic USB-C), mAh — assumption' },
     massG: 166, massSource: 'review 1Lumen (95 g without cell — official)',
@@ -148,7 +154,8 @@ export const FLASHLIGHTS = [
   {
     id: 'acebeam_l19_2', brand: 'Acebeam', model: 'L19 2.0',
     role: 'Дальнобой. Бьёт за километр, ударный бойник ломает стекло.',
-    price: 1200, emitter: 'Luminus SFT40 HI', emitterType: 'LED', cct: 6500, cri: 70, criSource: 'assumption',
+    price: 0,   // test phase: free
+    emitter: 'Luminus SFT40 HI', emitterType: 'LED', cct: 6500, cri: 70, criSource: 'assumption',
     battery: { format: '21700', mAh: 5100, rechargeable: true, onboardCharging: true, source: 'official (recommended cell)' },
     massG: 284, massSource: 'official',
     lengthMm: 163.8, headMm: 60, bodyMm: 25.4,
@@ -172,7 +179,8 @@ export const FLASHLIGHTS = [
   {
     id: 'imalent_ms18', brand: 'Imalent', model: 'MS18',
     role: 'Монстр. 100 000 люменов, вентилятор, OLED-экран. Тяжёлый и боится воды.',
-    price: 6500, emitter: '18 × CREE XHP70.2', emitterType: 'LED', cct: 6500, cri: 70, criSource: 'assumption',
+    price: 0,   // test phase: free
+    emitter: '18 × CREE XHP70.2', emitterType: 'LED', cct: 6500, cri: 70, criSource: 'assumption',
     battery: { format: '8 × 21700 pack', mAh: 32000, rechargeable: true, onboardCharging: true, source: 'official (8 × 4000 mAh)' },
     massG: 1900, massSource: 'official',
     lengthMm: 265, headMm: 129, bodyMm: 59,

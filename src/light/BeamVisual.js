@@ -61,6 +61,7 @@ function makeMotes() {
 export class BeamVisual {
   /** @param {THREE.Scene} scene */
   constructor(scene) {
+    this.scene = scene;
     this.castsLight = true;   // set false on the range
     this.spot = new THREE.SpotLight(0xffffff, 0, 10, 0.2, 0.6, BEAM_VIS.decay);
     this.spot.castShadow = true; // only the player's light casts shadows
@@ -146,5 +147,10 @@ export class BeamVisual {
     const rad = Math.tan(half) * len;
     this.cone.scale.set(rad, len, rad);
     this.coneMat.color.setRGB(r, g, b);
+  }
+
+  /** Removes the beam visuals from the scene (a new flashlight brings its own). */
+  dispose() {
+    this.scene?.remove(this.spot, this.spot.target, this.cone);
   }
 }

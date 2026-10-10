@@ -1,12 +1,16 @@
 // Save data in localStorage: Sparks, owned flashlights, active body, installed mods, level progress.
 const KEY = 'lumen.save';
-const DEFAULT = { sparks: 0, owned: ['convoy_s2plus_sst40'], active: 'convoy_s2plus_sst40', mods: [], levelsDone: [] };
+// Test phase: every flashlight is free and owned from the start (see flashlights.js prices).
+const ALL_OWNED = ['convoy_s2plus_sst40', 'maglite_ml300l_3d', 'fireflies_x1q_core', 'fireflies_l70_helios', 'fireflies_x4q_comet', 'fireflies_x4_stellar', 'acebeam_l19_2', 'imalent_ms18'];
+const DEFAULT = { sparks: 0, owned: ALL_OWNED, active: 'convoy_s2plus_sst40', mods: [], levelsDone: [] };
 
 export const SaveSystem = {
   load() {
     try {
       const raw = JSON.parse(localStorage.getItem(KEY));
-      return { ...DEFAULT, ...(raw || {}) };
+      const d = { ...DEFAULT, ...(raw || {}) };
+      d.owned = [...new Set([...(d.owned || []), ...ALL_OWNED])];   // test phase: all bodies available
+      return d;
     } catch {
       return { ...DEFAULT };
     }

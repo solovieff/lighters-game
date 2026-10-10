@@ -18,6 +18,7 @@ export class FlashlightHero {
    * @param {string} flashlightId spec id from FLASHLIGHTS
    */
   constructor(scene, flashlightId = 'convoy_s2plus_sst40') {
+    this.scene = scene;
     this.spec = FLASHLIGHTS.find((f) => f.id === flashlightId);
     const built = buildFlashlight(flashlightId);
     this.model = built.group;
@@ -235,6 +236,11 @@ export class FlashlightHero {
   forwardDir() {
     const a = this.heading;
     return new THREE.Vector3(Math.sin(a), 0, -Math.cos(a));
+  }
+
+  /** Removes the body and the halo from the scene (the hero is rebuilt for a new flashlight). */
+  dispose() {
+    this.scene?.remove(this.pivot, this.halo);
   }
 }
 
