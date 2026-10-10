@@ -180,6 +180,12 @@ function backToMenu() {
   menu.show();
 }
 
+// Debug hook for live checks (read-only snapshot + kill the battery). Not a game feature.
+window.__lumen = {
+  state: () => ({ state: states.state, dead: power.dead, charge: power.charge, lives, deadTimer, hero: hero.position.toArray() }),
+  kill: () => { power.die(); },
+};
+
 window.addEventListener('keydown', (e) => {
   if (states.is(STATES.WORKSHOP)) {
     if (e.code === 'Escape') { workshop.close(); menu.show(); states.go(STATES.MENU); }
@@ -218,7 +224,9 @@ function spawnProjectile(from, dir, pct) {
 /** Respawn after the battery dies: back to the last charging station with a full charge. */
 function respawn() {
   hero.position.set(level.respawnPoint.x, 0, level.respawnPoint.z);
-  hero.velocity.set(0, 0, 0);
+  hero.hopT = 0;        // stop any hop in progress: the hero lands at the station
+  hero.hopElapsed = 0;
+  hero.lift = 0;
   power.setCharge(100);
   deadTimer = 0;
   hud.setOverlay(null);
