@@ -1,8 +1,8 @@
 // The player: the flashlight stands on its tail and hops.
-// Stage 3 covers: gravity, hop movement, jump, AABB collisions, squash/stretch, lean, head tilt by arrow keys.
+// Beam is aimed at the floor in front of the hero (the body stays upright, the head points where the beam lands).
 import * as THREE from 'three';
 import { buildFlashlight } from '../assets/FlashlightModels.js';
-import { GRAVITY } from '../core/config.js';
+import { GRAVITY, AIM, HALO } from '../core/config.js';
 import { hopSpeed, jumpVelocity } from '../core/derived.js';
 import { FLASHLIGHTS } from '../data/flashlights.js';
 import { resolveBoxes } from '../physics/Physics.js';
@@ -19,7 +19,6 @@ export class FlashlightHero {
     this.lengthM = built.lengthM;
     this.radiusM = built.radiusM;
 
-    // Pivot: the model's own origin is at the tail; we tilt a parent pivot.
     this.pivot = new THREE.Group();
     this.pivot.add(this.model);
     scene.add(this.pivot);
@@ -32,46 +31,58 @@ export class FlashlightHero {
     this.speed = hopSpeed(this.spec.massG);
     this.jumpV = jumpVelocity(this.spec.massG);
 
-    // Hop cycle: short bounces while moving.
     this.hopPhase = 0;
-    this.squash = 0;        // -1..1, negative = squashed on landing
-    this.lean = 0;          // radians, toward movement
-    this.tilt = { x: 0, z: 0 }; // head tilt from arrow keys (rad)
-    this.beamDir = new THREE.Vector3(0, 1, 0); // where the head points
+    this.squash = 0;   // -1..1, negative = squashed on landing
+    this.lean = 0;     // radians, toward movement
+
+    // Facing = direction the hero moves toward. Forward vector = (sin h, 0, -cos h).
+    this.heading = 0;
+    // Beam: a floor point in front of the hero, set by arrow keys.
+    this.aimYawOffset = 0;               // rad, left/right of heading
+    this.aimReach = AIM.reachDefault;    // m, distance on the floor
+
+    // Halo: faint warm spill that follows the hero.
+    this.halo = new THREE.PointLight(HALO.color, HALO.intensity, HALO.distance, 2);
+    scene.add(this.halo);
+
+    // Derived each frame.
+    this.headWorld = new THREE.Vector3();
+    this.beamTarget = new THREE.Vector3();
   }
 
   /**
    * Advances physics and animation.
    * @param {number} dt seconds
    * @param {{ x: number, z: number }} move input axes (-1..1), camera-relative
-   * @param {{ x: number, y: number }} aim input axes for head tilt (-1..1)
+   * @param {{ x: number, y: number }} aim arrow axes: x = left/right yaw, y = up/down reach
    * @param {import('../physics/Physics.js').AABB[]} boxes static obstacles
    * @param {boolean} jumpPressed jump edge this frame
    */
   update(dt, move, aim, boxes, jumpPressed) {
-    // Horizontal velocity from input. Hops: movement is applied only while airborne or on hop peaks.
     const moving = Math.hypot(move.x, move.z) > 0.01;
-    const vx = moving ? move.x * this.speed : 0;
-    const vz = moving ? move.z * this.speed : 0;
-    this.velocity.x = vx;
-    this.velocity.z = vz;
+    this.velocity.x = moving ? move.x * this.speed : 0;
+    this.velocity.z = moving ? move.z * this.speed : 0;
+
+    // Turn toward movement direction.
+    if (moving) {
+      const targetHeading = Math.atan2(move.x, -move.z);
+      this.heading += shortestAngle(this.heading, targetHeading) * Math.min(1, dt * 8);
+    }
 
     if (jumpPressed && this.onGround) {
       this.velocity.y = this.jumpV;
       this.onGround = false;
-      this.squash = 0.4; // stretch on takeoff
+      this.squash = 0.4;
     }
 
     this.velocity.y -= GRAVITY * dt;
-
-    // Integrate and collide per axis.
     this.position.x += this.velocity.x * dt;
     this.position.z += this.velocity.z * dt;
     this.position.y += this.velocity.y * dt;
 
     const res = resolveBoxes(this.position, this.size, boxes);
     if (res.onGround) {
-      if (this.velocity.y < -1) this.squash = -0.5; // squash on landing
+      if (this.velocity.y < -1) this.squash = -0.5;
       this.velocity.y = 0;
       this.onGround = true;
     }
@@ -81,32 +92,54 @@ export class FlashlightHero {
       this.onGround = true;
     }
 
-    // Lean toward movement and springy squash/stretch recovery.
-    const targetLean = moving ? -move.z * 0.12 + move.x * 0.0 : 0;
+    // Lean and springy squash/stretch.
+    const targetLean = moving ? -move.z * 0.12 : 0;
     this.lean += (targetLean - this.lean) * Math.min(1, dt * 10);
     this.squash += (0 - this.squash) * Math.min(1, dt * 8);
 
-    // Hop bounce only while grounded and moving (visual).
+    // Hop bounce while grounded and moving.
     if (moving && this.onGround) this.hopPhase += dt * 9;
     const hop = moving && this.onGround ? Math.abs(Math.sin(this.hopPhase)) * 0.02 : 0;
 
-    // Head tilt from arrow keys: body leans up to 70 deg from vertical.
-    const maxTilt = THREE.MathUtils.degToRad(70);
-    this.tilt.x += (aim.y * 1.6 - this.tilt.x) * Math.min(1, dt * 6);
-    this.tilt.z += (aim.x * 1.6 - this.tilt.z) * Math.min(1, dt * 6);
-    this.tilt.x = THREE.MathUtils.clamp(this.tilt.x, -maxTilt, maxTilt);
-    this.tilt.z = THREE.MathUtils.clamp(this.tilt.z, -maxTilt, maxTilt);
+    // Beam aim from arrow keys.
+    this.aimYawOffset = THREE.MathUtils.clamp(
+      this.aimYawOffset + aim.x * AIM.yawSpeed * dt, -Math.PI / 2, Math.PI / 2
+    );
+    this.aimReach = THREE.MathUtils.clamp(
+      this.aimReach - aim.y * AIM.reachSpeed * dt, AIM.reachMin, AIM.reachMax
+    );
 
     // Apply to visuals.
     this.pivot.position.copy(this.position);
     this.pivot.position.y += hop;
-    this.pivot.rotation.set(this.tilt.x + this.lean, 0, this.tilt.z, 'YXZ');
+    this.pivot.rotation.set(this.lean, this.heading, 0, 'YXZ');
     const sy = 1 + this.squash * 0.15;
     const sxz = 1 - this.squash * 0.07;
     this.model.scale.set(sxz, sy, sxz);
 
-    // Head direction in world space, used later by the beam.
-    this.beamDir.set(0, 1, 0).applyEuler(this.pivot.rotation).normalize();
-    this.headWorld = this.pivot.position.clone().add(new THREE.Vector3(0, this.lengthM, 0).applyEuler(this.pivot.rotation));
+    // Head position and beam target (floor point in front of the hero).
+    this.headWorld.set(this.position.x, this.position.y + this.lengthM, this.position.z);
+    const dir = this.forwardDir();
+    this.beamTarget.set(
+      this.position.x + dir.x * this.aimReach,
+      0.02,
+      this.position.z + dir.z * this.aimReach
+    );
+
+    this.halo.position.set(this.position.x, this.position.y + this.lengthM * 0.6, this.position.z);
   }
+
+  /** Horizontal beam direction (unit, XZ plane), including the arrow-key yaw offset. */
+  forwardDir() {
+    const a = this.heading + this.aimYawOffset;
+    return new THREE.Vector3(Math.sin(a), 0, -Math.cos(a));
+  }
+}
+
+/** Shortest signed angle from a to b, in radians. */
+function shortestAngle(a, b) {
+  let d = (b - a) % (Math.PI * 2);
+  if (d > Math.PI) d -= Math.PI * 2;
+  if (d < -Math.PI) d += Math.PI * 2;
+  return d;
 }

@@ -1,4 +1,5 @@
-// Stage 3: hero on screen. Keyboard only: WASD move, Space jump, arrows tilt head, L light on/off.
+// Stage 3 fix: the beam lights the floor in front of the hero, with a faint halo so the world is never pitch black.
+// Keyboard only: WASD move, Space jump, arrows aim (left/right yaw, up/down reach), L light on/off, Esc pause.
 import * as THREE from 'three';
 import { Renderer } from './render/Renderer.js';
 import { CameraRig } from './render/CameraRig.js';
@@ -16,8 +17,9 @@ const input = new Input();
 const states = new StateManager(STATES.MENU);
 
 // World: almost no light. Dark desk floor and a few wooden blocks to test collisions.
-scene.add(new THREE.AmbientLight('#ffffff', 0.02));
-scene.add(new THREE.HemisphereLight('#1a2440', '#000000', 0.05));
+// Dim blue-grey ambient so the floor is never pitch black (not a real light source; the beam is).
+scene.add(new THREE.AmbientLight('#8090b8', 1.2));
+scene.add(new THREE.HemisphereLight('#4a5a88', '#101010', 1.0));
 
 const woodTex = createWoodTexture(512);
 woodTex.repeat.set(4, 4);
@@ -27,11 +29,11 @@ floor.rotation.x = -Math.PI / 2;
 floor.receiveShadow = true;
 scene.add(floor);
 
-// Obstacles: a pencil-like log, a block to hop onto, and a small step.
+// Obstacles: a low log, a block to climb, a tall block.
 const obstacles = [
-  { cx: 0, cy: 0.05, cz: -1.5, sx: 0.6, sy: 0.1, sz: 0.1 },  // low log
-  { cx: 0.8, cy: 0.15, cz: -2.5, sx: 0.4, sy: 0.3, sz: 0.4 }, // block to climb
-  { cx: -0.9, cy: 0.35, cz: -3.5, sx: 0.5, sy: 0.7, sz: 0.5 }, // tall block
+  { cx: 0, cy: 0.05, cz: -1.5, sx: 0.6, sy: 0.1, sz: 0.1 },
+  { cx: 0.8, cy: 0.15, cz: -2.5, sx: 0.4, sy: 0.3, sz: 0.4 },
+  { cx: -0.9, cy: 0.35, cz: -3.5, sx: 0.5, sy: 0.7, sz: 0.5 },
 ];
 const boxes = [];
 const blockMat = new THREE.MeshStandardMaterial({ color: '#6b4a2f', roughness: 0.8 });
@@ -48,15 +50,16 @@ for (const o of obstacles) {
 const hero = new FlashlightHero(scene, 'convoy_s2plus_sst40');
 const rig = new CameraRig(gfx.camera);
 
-// Simple beam placeholder: SpotLight from the head, toggled with L.
+// Beam: SpotLight from the head onto the floor in front of the hero. On by default, L toggles.
 const beam = new THREE.SpotLight('#fff4e0', 60, 12, THREE.MathUtils.degToRad(18), 0.6, 1.5);
 beam.castShadow = true;
 beam.shadow.mapSize.set(1024, 1024);
-beam.visible = false;
 scene.add(beam, beam.target);
-let lightOn = false;
+let lightOn = true;
+beam.visible = lightOn;
 
 // Temporary start overlay: any key starts the game (no mouse).
+// Add ?play to the URL to skip the overlay (for testing).
 const overlay = document.createElement('div');
 overlay.id = 'menu-temp';
 overlay.textContent = 'Нажмите любую клавишу, чтобы начать';
@@ -75,38 +78,36 @@ Object.assign(hud.style, {
 });
 document.body.appendChild(hud);
 
+function startGame() {
+  if (!states.is(STATES.MENU)) return;
+  states.go(STATES.PLAYING);
+  overlay.remove();
+}
+
 bus.on('stateChanged', ({ from, to }) => console.log(`[state] ${from} -> ${to}`));
 bus.on('pause', () => {
   if (states.is(STATES.PLAYING)) states.go(STATES.PAUSED);
   else if (states.is(STATES.PAUSED)) states.go(STATES.PLAYING);
 });
 
-window.addEventListener('keydown', (e) => {
-  if (states.is(STATES.MENU)) {
-    states.go(STATES.PLAYING);
-    overlay.remove();
-  }
-});
-
-/** Toggles the placeholder beam. Real light modes come in stage 4. */
-function toggleLight() {
-  lightOn = !lightOn;
-  beam.visible = lightOn;
-}
+window.addEventListener('keydown', () => startGame());
+if (location.search.includes('play')) startGame();
 
 let elapsed = 0;
 
 const loop = new Loop(
   (dt) => {
-    if (input.wasPressed('KeyL')) toggleLight();
+    if (input.wasPressed('KeyL')) {
+      lightOn = !lightOn;
+      beam.visible = lightOn;
+    }
     if (states.is(STATES.PLAYING)) {
       elapsed += dt;
       hero.update(dt, input.moveAxes(), input.aimAxes(), boxes, input.wasPressed('Space'));
       rig.update(hero.position, dt, 0);
 
-      // Beam sits at the head and points along the head direction.
       beam.position.copy(hero.headWorld);
-      beam.target.position.copy(hero.headWorld).addScaledVector(hero.beamDir, 4);
+      beam.target.position.copy(hero.beamTarget);
     }
     input.endFrame();
 
@@ -114,9 +115,9 @@ const loop = new Loop(
       `state: ${states.state}\n` +
       `time:  ${elapsed.toFixed(1)} s\n` +
       `pos:   ${hero.position.x.toFixed(2)}, ${hero.position.y.toFixed(2)}, ${hero.position.z.toFixed(2)}\n` +
-      `ground:${hero.onGround ? ' yes' : ' no'}  speed: ${hero.speed.toFixed(2)} m/s  jump: ${hero.jumpV.toFixed(2)} m/s\n` +
+      `ground:${hero.onGround ? ' yes' : ' no'}  reach: ${hero.aimReach.toFixed(2)} m\n` +
       `light: ${lightOn ? 'on' : 'off'} (L)\n` +
-      `keys:  WASD move, Space jump, arrows tilt head, L light, Esc pause`;
+      `keys:  WASD move, Space jump, arrows aim, L light, Esc pause`;
   },
   () => gfx.render()
 );

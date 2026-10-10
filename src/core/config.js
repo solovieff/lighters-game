@@ -15,6 +15,22 @@ export const CLICK = {
   DOUBLE_WINDOW_S: 0.35,  // two clicks within this window = double click (Turbo on anduril2)
 };
 
+// Beam aim with arrow keys: where the light lands on the floor in front of the hero.
+export const AIM = {
+  reachDefault: 1.2,   // m, floor point distance at start
+  reachMin: 0.4,       // m
+  reachMax: 4.0,       // m
+  reachSpeed: 1.5,     // m/s when holding Up/Down
+  yawSpeed: 2.0,       // rad/s when holding Left/Right
+};
+
+// Faint glow around the hero so the world is never pitch black (LED spill, not a world light).
+export const HALO = {
+  color: '#ffd9a0',
+  intensity: 0.25,
+  distance: 2.2,
+};
+
 export const CAMERA = {
   fov: 55,
   distance: 1.6,   // behind player (m)

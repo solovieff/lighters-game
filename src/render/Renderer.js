@@ -15,7 +15,7 @@ export class Renderer {
 
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color('#010103');
-    this.scene.fog = new THREE.FogExp2('#010103', 0.02);
+    this.scene.fog = new THREE.FogExp2('#010103', 0.004);
 
     this.camera = new THREE.PerspectiveCamera(
       CAMERA.fov, window.innerWidth / window.innerHeight, 0.05, 500
