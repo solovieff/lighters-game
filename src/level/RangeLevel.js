@@ -369,7 +369,8 @@ export class RangeLevel extends Level {
       t.parts.dot.style.background = brightnessColor(t.lux);
       t.parts.dot.style.boxShadow = `0 0 ${Math.min(18, 2 + t.lux * 4)}px ${brightnessColor(t.lux)}`;
       // Players read candela and lumens (the flashlight's own specs), not lux. Lux stays inside the damage math.
-      t.parts.lux.textContent = `${Math.round(this.beamCd).toLocaleString('ru-RU')} кд`;
+      const cdHere = this.cdAt ? Math.max(...t.samples.map((p) => this.cdAt(p))) : 0;
+      t.parts.lux.textContent = `${Math.round(cdHere).toLocaleString('ru-RU')} кд`;
       t.parts.split.textContent = `${Math.round(this.beamLumens).toLocaleString('ru-RU')} лм`;
     }
   }

@@ -16,6 +16,7 @@ import { PowerSystem } from './light/PowerSystem.js';
 import { BeamVisual } from './light/BeamVisual.js';
 import { summarizeSpec } from './light/BeamModel.js';
 import { luxOnTarget, dpsFromLux } from './light/LightDamage.js';
+import { cdAtAngle } from './light/BeamModel.js';
 import { HUD } from './ui/HUD.js';
 import { effectiveSpec } from './data/effects.js';
 import { LEVEL_1 } from './data/levels.js';
@@ -74,6 +75,12 @@ const health = new HeroHealth();
 // The current level is the chosen one: the drawer by default, the test range with T from the menu.
 // Both expose the same contract (colliders, enemies, update, bossInfo, atExit), so main.js does not special-case them.
 let level = new TableLevel(scene, LEVEL_1, spec, particles);
+// Candela the beam sends toward a point: depends on the angle from the beam axis (the same model as the lux).
+const cdFor = (origin, axis, beamCd, beamLumens) => (p) => {
+  const d = p.clone ? p.clone().sub(origin) : new THREE.Vector3(p.x, p.y, p.z).sub(origin);
+  const alpha = Math.acos(Math.max(-1, Math.min(1, d.normalize().dot(axis))));
+  return cdAtAngle(alpha, beamCd, beamLumens);
+};
 const luxFor = (origin, axis, beamCd, beamLumens) => (p) =>
   luxOnTarget({ origin, axis, point: p, cd: beamCd, lumens: beamLumens, boxes: level.colliders });
 
@@ -262,6 +269,7 @@ const loop = new Loop(
       const dimNow = Math.pow(1 - MOTH_CLING_DIM, mothsClinging.length);
       const axisNow = hero.beamTarget.clone().sub(hero.headWorld).normalize();
       level.lux = luxFor(hero.headWorld, axisNow, power.cd * dimNow, power.lumens * dimNow);
+      level.cdAt = cdFor(hero.headWorld, axisNow, power.cd * dimNow, power.lumens * dimNow);
       hero.halo.visible = level.usesHalo;   // the range has no halo (honest lux readout)
       beamVis.castsLight = level.usesHalo;   // the range does not light the scene (same rule as the halo)
       level.worldLevel = worldLevel;
