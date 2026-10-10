@@ -56,8 +56,14 @@ export function buildPartitions(root, partitions, defaultH) {
     const sz = p.z1 - p.z0;
     const cx = (p.x0 + p.x1) / 2;
     const cz = (p.z0 + p.z1) / 2;
-    addMesh(root, new THREE.BoxGeometry(sx, h, sz), mat, cx, h / 2, cz);
-    colliders.push(collider(cx, h / 2, cz, sx, h, sz, false));
+    const mesh = addMesh(root, new THREE.BoxGeometry(sx, h, sz), mat, cx, h / 2, cz);
+    const col = collider(cx, h / 2, cz, sx, h, sz, false);
+    colliders.push(col);
+    if (p.gate) {
+      // A gate panel: it stays a wall until opened, then both its mesh and its collider go away.
+      mesh.name = 'gate';
+      mesh.userData.collider = col;
+    }
   }
   return colliders;
 }

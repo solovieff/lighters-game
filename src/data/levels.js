@@ -5,7 +5,7 @@ export const LEVEL_1 = {
   id: 'drawer',
   name: 'Ящик стола',
   subtitle: 'Обучение',
-  bounds: { minX: -0.5, maxX: 4.0, halfZ: 0.75 }, // drawer interior
+  bounds: { minX: -0.5, maxX: 8.0, halfZ: 0.75 }, // drawer interior, extended to the empty room at the end
   wallHeight: 0.2,
   wallThickness: 0.04,
   start: { x: 0.0, z: 0.0 },
@@ -18,6 +18,9 @@ export const LEVEL_1 = {
     { x0: 2.0, x1: 2.05, z0: -0.75, z1: 0.25 },   // maze baffle 3 (from the top wall), gap at the bottom
     { x0: 2.9, x1: 2.95, z0: -0.75, z1: 0.2 },    // room wall with a door at the top
     { x0: 2.9, x1: 2.95, z0: 0.4, z1: 0.75 },
+    // Gate wall between the drawer and the empty room. The panel in the top corner is closed until the beam lights the corner.
+    { x0: 3.97, x1: 4.0, z0: -0.75, z1: 0.45 },
+    { x0: 3.97, x1: 4.0, z0: 0.45, z1: 0.75, h: 0.2, gate: true },
   ],
 
   // Props: pencils are logs across the lane, coins are stacked platforms, paper is a stack, ruler and clip are metal.
@@ -46,12 +49,16 @@ export const LEVEL_1 = {
     { id: 'boss', x: 2.95, z: -0.45 },
   ],
 
-  // Enemy waves: only the weakest crawlers, a couple of them, and only as a light-tested warm-up.
-  // The main path is about running through the drawer and collecting, not fighting.
+  // Enemy waves: only the weakest crawlers. The last one waits in the empty room beyond the gate.
   waves: [
     { id: 'w1', triggerX: 1.2, enemies: [
       { type: 'crawler', x: 1.7, z: 0.45 },
       { type: 'crawler', x: 2.6, z: -0.45 },
+    ] },
+    { id: 'w2', triggerX: 4.2, enemies: [
+      { type: 'crawler', x: 6.0, z: -0.2 },
+      { type: 'swarm', x: 6.6, z: 0.3 },
+      { type: 'swarm', x: 6.8, z: 0.35 },
     ] },
   ],
 
@@ -61,8 +68,13 @@ export const LEVEL_1 = {
   // Mouse quest: shine into the left corner, a mouse runs out and eats the pencil.
   quest: { id: 'mouse', lightTargetX: -0.3, lightTargetZ: -0.6, mouseStart: { x: -0.4, z: -0.6 }, target: 'crate', targetX: 0.6, targetZ: 0.0 },
 
-  // Exit: a hole in the top-right corner. The beam on that corner opens it, and the hero climbs out.
-  exit: { x: 3.95, z: 0.6, hole: true, openLightX: 3.7, openLightZ: 0.6 },   // the beam on the corner opens the hole
+  // Lamps in the empty room: small glowing lamps that light the room for the eye (not part of the lux readout).
+  lamps: [{ x: 4.6, z: -0.45 }, { x: 5.6, z: 0.45 }, { x: 7.0, z: -0.45 }],
+
+  // Gate: the beam on the top-right corner opens the panel in the gate wall (the way into the empty room).
+  gate: { openLightX: 3.7, openLightZ: 0.6 },
+  // Exit: the far door of the empty room. Reaching it finishes the level.
+  exit: { x: 7.9, z: 0 },
 
   // Tutorial hints, shown once each when the hero passes X.
   hints: [

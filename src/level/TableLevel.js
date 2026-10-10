@@ -57,13 +57,26 @@ export class TableLevel extends Level {
       };
     }
     this.bossDefeated = false;
+    this.gateOpen = false;   // the gate in the wall before the empty room
     this.sparks = 0;
     this.respawnPoint = { x: data.start.x, z: data.start.z };
 
     this.colliders.push(...buildWalls(this.root, data));
     this.colliders.push(...buildProps(this.root, data.props));
     this.colliders.push(...buildPartitions(this.root, data.partitions, data.wallHeight));
-    this.exit = buildExit(this.root, data.exit.x, 0, data.bounds.halfZ, data.exit.hole ? { z: data.exit.z } : null);
+    this.exit = buildExit(this.root, data.exit.x, 0, data.bounds.halfZ, null);   // the far door of the empty room
+    // Lamps in the empty room: a small glowing shade and a weak warm light. Picture only (not in the lux readout).
+    for (const L of data.lamps || []) {
+      const shade = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.03, 0.05, 0.08, 10),
+        new THREE.MeshStandardMaterial({ color: '#ffd9a0', emissive: '#ffb84a', emissiveIntensity: 1.5 })
+      );
+      shade.position.set(L.x, 0.08, L.z);
+      this.root.add(shade);
+      const light = new THREE.PointLight('#ffd9a0', 0.35, 1.6, 2);
+      light.position.set(L.x, 0.12, L.z);
+      this.root.add(light);
+    }
     for (const s of data.shards) this.pickups.push(new Pickup(this.root, s, this.cri));
     for (const c of data.checkpoints) this.checkpoints.push(new Checkpoint(this.root, c));
   }
@@ -132,14 +145,22 @@ export class TableLevel extends Level {
       }
     }
 
-    // Exit opens: with no boss, the hole opens when the beam lights its corner; a far-end exit opens at once.
-    if (!this.data.boss && !this.bossDefeated) {
-      const ex = this.data.exit;
-      const ready = ex.hole ? (this.lux && this.lux({ x: ex.openLightX, y: 0.011, z: ex.openLightZ }) >= 1) : true;
-      if (ready) {
-        this.bossDefeated = true;
-        this.exit.open();
+    // The gate opens when the beam lights its corner (the same trigger as the mouse). Then the way is free.
+    if (!this.gateOpen && this.data.gate && this.lux) {
+      const g = this.data.gate;
+      if (this.lux({ x: g.openLightX, y: 0.011, z: g.openLightZ }) >= 1) {
+        this.gateOpen = true;
+        this.root.children.filter((c) => c.name === 'gate').forEach((c) => {
+          c.visible = false;
+          if (c.userData.collider) this.colliders = this.colliders.filter((col) => col !== c.userData.collider);
+        });
+        bus.emit('hint', { text: 'Ворота открыты — дальше пустая комната' });
       }
+    }
+    // Level exit: the far door opens with the gate (no boss in this level).
+    if (!this.data.boss && !this.bossDefeated && this.gateOpen) {
+      this.bossDefeated = true;
+      this.exit.open();
     }
     if (this.boss && !this.boss.alive && !this.bossDefeated) {
       this.bossDefeated = true;
@@ -153,10 +174,6 @@ export class TableLevel extends Level {
   /** True once the boss is down and the hero reaches the exit. */
   atExit(heroX, heroZ = 0) {
     if (!this.bossDefeated) return false;   // the exit is closed until its condition is met
-    if (this.data.exit.hole) {
-      // The hole in the corner: the hero must be in it (near its x and z), not just anywhere past the wall.
-      return heroX >= this.data.exit.x - 0.05 && Math.abs(heroZ - this.data.exit.z) < 0.2;
-    }
     return heroX >= this.data.exit.x - 0.05;
   }
 
