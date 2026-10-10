@@ -94,14 +94,12 @@ export function buildProps(root, props) {
       const body = addMesh(root, new THREE.CylinderGeometry(r, r, len, 16), mat, p.x, r, p.z, Math.PI / 2);
       body.name = 'pencil';   // the mouse quest finds and hides this when it is eaten
       colliders.push(collider(p.x, r, p.z, 2 * r, 2 * r, len, style.metal));
-      // Eraser cap on one end of the pencil (the end is at z = p.z ± len/2).
-      const endZ = p.z + (p.eraserEnd === 'neg' ? -len / 2 - 0.04 : len / 2 + 0.04);
+      // Eraser cap on TOP of the pencil body (the pencil lies along Z, so the top is +Y).
       const cap = new THREE.Mesh(
         new THREE.CylinderGeometry(r * 1.02, r * 1.02, 0.08, 16),
         propMaterial('eraser')
       );
-      cap.rotation.z = Math.PI / 2;
-      cap.position.set(p.x, r, endZ);
+      cap.position.set(p.x, r * 2 + 0.005, p.z);
       cap.name = 'pencil-eraser';
       root.add(cap);
     } else if (p.kind === 'coin') {

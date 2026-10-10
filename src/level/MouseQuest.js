@@ -5,7 +5,6 @@ import { bus } from '../core/EventBus.js';
 
 const RUN_SPEED = 0.6;     // m/s, the mouse runs toward the pencil
 const EAT_SEC = 1.5;       // s, eating the pencil
-const LIGHT_SEC = 0.6;     // s the beam must stay on the corner before the mouse comes out
 const NOTICE_LUX = 1;      // lux on the corner that the mouse notices (a faint spill does not count)
 
 export class MouseQuest {
@@ -18,7 +17,6 @@ export class MouseQuest {
     this.quest = quest;
     this.pencilAt = pencilAt;
     this.state = 'wait';        // wait | run | eat | done
-    this.lit = 0;               // seconds the beam has been on the corner
     this.timer = 0;
     this.onEaten = null;      // set by the level: called once when the pencil is gone
     this.group = new THREE.Group();
@@ -60,9 +58,9 @@ export class MouseQuest {
     const cz = this.quest.lightTargetZ;
 
     if (this.state === 'wait') {
-      // The corner must be lit for LIGHT_SEC before the mouse comes out.
-      this.lit = lux({ x: cx, y: 0.011, z: cz }) >= NOTICE_LUX ? this.lit + dt : 0;   // real lux threshold, not just any light
-      if (this.lit >= LIGHT_SEC) {
+      // Start only when the beam actually reaches the corner at real lux. A sweep passes it in a few frames,
+      // so there is no waiting time: the first lit frame sends the mouse out.
+      if (lux({ x: cx, y: 0.011, z: cz }) >= NOTICE_LUX) {
         this.state = 'run';
         this.group.visible = true;
         bus.emit('hint', { text: 'Мышка! Она хочет карандаш' });
