@@ -93,12 +93,18 @@ export class HUD {
   setHidden(hidden) {
     const d = hidden ? 'none' : '';
     for (const el of [this.panel, this.controls, this.hint, this.notice, this.bossBox]) el.style.display = d;
+    // The keyboard line never shows on a phone, even after the HUD is shown again.
+    if (!hidden && this.isTouch()) this.controls.style.display = 'none';
   }
 
   /** Name of the flashlight in hand, shown at the top of the panel. */
+  isTouch() {
+    return !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+  }
+
   /** Short HUD on phones (touch devices), the full one on a keyboard screen. */
   get compact() {
-    return !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+    return this.isTouch();
   }
 
   setFlashlight(name) {
