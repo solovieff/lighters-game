@@ -99,7 +99,14 @@ export class FlashlightHero {
     this.position.y += this.velocity.y * dt;
     this.knock.multiplyScalar(Math.max(0, 1 - dt * 8));
 
-    const res = resolveBoxes(this.position, this.size, boxes);
+    // Body and head together: repeat until neither the feet box nor the head tip overlaps a wall.
+    let res = { onGround: false, hitWall: false };
+    for (let pass = 0; pass < 4; pass++) {
+      const r = resolveBoxes(this.position, this.size, boxes);
+      res.onGround = res.onGround || r.onGround;
+      res.hitWall = res.hitWall || r.hitWall;
+      this.keepHeadOutOfWalls(boxes);
+    }
     if (res.onGround) {
       if (this.velocity.y < -1) this.squash = -0.5;
       this.velocity.y = 0;
@@ -156,6 +163,29 @@ export class FlashlightHero {
     this.beamTarget.copy(this.headWorld).addScaledVector(this.beamDir, 2);
 
     this.halo.position.set(this.position.x, this.position.y + this.radiusM * 3, this.position.z);
+  }
+
+  /**
+   * The lying body sticks out in front of the feet. If the head tip ends up inside a wall, the hero is pushed
+   * back along the axis of the smallest penetration of the tip (out through the face it came in through).
+   */
+  keepHeadOutOfWalls(boxes) {
+    const L = this.lengthM;
+    for (const b of boxes) {
+      if (this.position.y >= b.max.y || this.position.y + this.size.h <= b.min.y) continue;
+      const tip = { x: this.position.x + this.beamDir.x * L, z: this.position.z + this.beamDir.z * L };
+      if (!(tip.x > b.min.x && tip.x < b.max.x && tip.z > b.min.z && tip.z < b.max.z)) continue;
+      // Smallest move of the hero that takes the tip out of this box, on either horizontal axis.
+      const outX = Math.min(tip.x - b.min.x, b.max.x - tip.x);
+      const outZ = Math.min(tip.z - b.min.z, b.max.z - tip.z);
+      if (outX <= outZ) {
+        const sign = tip.x - b.min.x < b.max.x - tip.x ? -1 : 1;
+        this.position.x += sign * (outX + 1e-4);
+      } else {
+        const sign = tip.z - b.min.z < b.max.z - tip.z ? -1 : 1;
+        this.position.z += sign * (outZ + 1e-4);
+      }
+    }
   }
 
   /** Local-space position of the model's head tip (end of the body, before the model's matrix). */
