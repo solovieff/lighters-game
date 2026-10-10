@@ -30,10 +30,7 @@ export const CLICK = {
 // Beam aim with arrow keys: where the light lands on the floor in front of the hero.
 export const AIM = {
   yawSpeed: 2.0,        // rad/s when holding Left/Right: beam turns around in a full circle
-  pitchSpeed: 1.2,      // rad/s when holding Up/Down: beam rises and falls, full range
-  pitchMin: -1.4,       // rad, lowest beam angle (about -80°, almost straight down)
-  pitchMax: 1.4,        // rad, highest beam angle (about +80°, almost straight up)
-  pitchDefault: -0.1,   // rad (about -6°), starts nearly horizontal so the beam reaches shadows ahead, not the floor under the hero
+  // The beam is always horizontal, at head height. Up/Down do not aim.
 };
 
 // Faint glow around the hero so the world is never pitch black (LED spill, not a world light).

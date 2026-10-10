@@ -46,7 +46,6 @@ export class FlashlightHero {
     this.heading = 0;
     // Beam: a floor point in front of the hero, set by arrow keys.
     this.aimYawOffset = 0;               // rad, left/right of heading
-    this.aimPitch = AIM.pitchDefault;    // rad, beam angle from horizontal (negative = down)
 
     // Halo: faint warm spill that follows the hero.
     this.halo = new THREE.PointLight(HALO.color, HALO.intensity, HALO.distance, 2);
@@ -68,7 +67,7 @@ export class FlashlightHero {
    * Advances physics and animation.
    * @param {number} dt seconds
    * @param {{ x: number, z: number }} move input axes (-1..1), camera-relative
-   * @param {{ x: number, y: number }} aim arrow axes: x = left/right yaw, y = up/down reach
+   * @param {{ x: number, y: number }} aim arrow axes: x = left/right yaw (y unused)
    * @param {import('../physics/Physics.js').AABB[]} boxes static obstacles
    * @param {boolean} jumpPressed jump edge this frame
    */
@@ -116,9 +115,6 @@ export class FlashlightHero {
 
     // Beam aim from arrow keys: free rotation in a full circle, angle wrapped to [-π, π).
     this.aimYawOffset = wrapAngle(this.aimYawOffset + aim.x * AIM.yawSpeed * dt);
-    this.aimPitch = THREE.MathUtils.clamp(
-      this.aimPitch - aim.y * AIM.pitchSpeed * dt, AIM.pitchMin, AIM.pitchMax
-    );
 
     // Apply to visuals: heading first, then lean in world space (works for any direction).
     this.pivot.position.copy(this.position);
@@ -133,11 +129,10 @@ export class FlashlightHero {
 
     // Head position and beam target (floor point in front of the hero).
     this.headWorld.set(this.position.x, this.position.y + this.lengthM, this.position.z);
-    // Beam direction: yaw around the body, pitch from the horizon (both full range).
+    // Beam is horizontal at head height: yaw only, full circle. Target = point 2 m along the beam.
     this.beamDir.copy(this.forwardDir());
-    this.beamDir.y = Math.sin(this.aimPitch);
+    this.beamDir.y = 0;
     this.beamDir.normalize();
-    // Target is a point ~2 m along the beam (used for the visual cone and the light axis).
     this.beamTarget.copy(this.headWorld).addScaledVector(this.beamDir, 2);
 
     this.halo.position.set(this.position.x, this.position.y + this.lengthM * 0.6, this.position.z);
