@@ -137,8 +137,19 @@ function openWorkshop() {
 }
 
 /** Switches to the test range: its own level, no walls, props or enemies. */
+/** Each level starts with its own battery and lives. Nothing carries over between the drawer and the range. */
+function resetLevelStatus() {
+  power.setCharge(100);
+  lives = LEVEL.lives;
+  hud.setLives(lives);
+  deadTimer = 0;
+  victoryShown = false;
+  hud.setOverlay(null);
+}
+
 function startRange() {
   level.dispose();
+  resetLevelStatus();
   // One start point for the hero and the range: the beam must land on the targets built from it.
   const start = { x: 0, z: 0 };
   level = new RangeLevel(scene, start, spec);
@@ -151,6 +162,7 @@ function startRange() {
 
 function startGame() {
   if (!states.is(STATES.MENU)) return;
+  resetLevelStatus();
   // The drawer starts with the beam pointing right (+X), the way the hero walks.
   hero.heading = Math.PI / 2;
   hero.aimYawOffset = 0;
@@ -279,8 +291,11 @@ const loop = new Loop(
         showVictory();
       }
     }
-    power.update(dt);
-    health.update(dt);
+    // The range is a shooting bench: the battery never drains there (the light still works).
+    if (level.drainsBattery !== false) {
+      power.update(dt);
+      health.update(dt);
+    }
 
     // Battery dead: show the overlay, then respawn at the last charging station.
     if (power.dead && states.is(STATES.PLAYING)) {

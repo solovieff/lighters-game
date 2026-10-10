@@ -346,6 +346,7 @@ export class RangeLevel extends Level {
   }
 
   /** Same contract as Level. The range is a shooting bench: the hero only turns the beam. */
+  get drainsBattery() { return false; }   // the range is a shooting bench: no battery drain
   get allowsMovement() {
     return false;
   }

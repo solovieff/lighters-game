@@ -30,6 +30,8 @@ export class Level {
 
   /** Whether the hero can walk and jump on this level (the range is a shooting bench: no). */
   get allowsMovement() { return true; }
+  /** Whether the battery drains here (the range is a shooting bench: no drain, no death). */
+  get drainsBattery() { return true; }
 
   /** Boss name and HP for the boss bar, or null. */
   bossInfo() { return null; }
