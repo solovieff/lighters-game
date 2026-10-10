@@ -38,7 +38,7 @@ export class HUD {
       right: '12px', top: '10px', color: '#7d8694', font: '13px monospace', textAlign: 'right',
     });
     this.controls.textContent =
-      'WASD ходьба · Пробел прыжок · стрелки луч · Q/E режим · L внешний свет · C заряд (тест) · Esc пауза';
+      'WASD ходьба · Пробел прыжок · стрелки луч · Q/E режим · L внешний свет · M музыка · C заряд (тест) · Esc пауза';
 
     this.bossBox = makeBlock({
       left: '50%', top: '10px', transform: 'translateX(-50%)', width: '420px', display: 'none',
