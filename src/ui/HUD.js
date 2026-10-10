@@ -79,6 +79,12 @@ export class HUD {
     this.hintTimer = 5;
   }
 
+  /** Hides or shows every HUD block (used while the main menu is open). */
+  setHidden(hidden) {
+    const d = hidden ? 'none' : '';
+    for (const el of [this.panel, this.controls, this.hint, this.notice, this.bossBox]) el.style.display = d;
+  }
+
   setLives(n) {
     this.lives = n;
   }

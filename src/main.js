@@ -22,6 +22,7 @@ import { TableLevel } from './level/TableLevel.js';
 import { SaveSystem } from './shop/SaveSystem.js';
 import { Workshop } from './shop/Workshop.js';
 import { RangeLevel } from './level/RangeLevel.js';
+import { MainMenu } from './ui/MainMenu.js';
 import { START_MODE_INDEX, MOTH_MAX_CLING, MOTH_CLING_DIM, MOTH_DARK_RESET_SEC, LEVEL } from './core/config.js';
 import { Particles } from './fx/Particles.js';
 import { Squad } from './ai/Squad.js';
@@ -90,16 +91,16 @@ const check = summarizeSpec(spec);
 console.log(`[check] ${spec.brand} ${spec.model}: режим ${check.mode}, ` +
   `hotspot ${check.thetaHotDeg.toFixed(1)}°, throw ${check.throwReal.toFixed(1)} м real / ${check.throwGame.toFixed(2)} м game`);
 
-// Temporary start overlay: any key starts the game (no mouse).
-const overlay = document.createElement('div');
-overlay.id = 'menu-temp';
-overlay.innerHTML = '<div>Нажмите любую клавишу, чтобы начать</div><div style="font-size:18px;margin-top:14px;color:#7d8694">W — Мастерская</div>';
-Object.assign(overlay.style, {
-  position: 'fixed', inset: '0', display: 'flex', alignItems: 'center',
-  justifyContent: 'center', color: '#c9b99a', font: '28px sans-serif',
-  background: 'rgba(0,0,0,0.6)', userSelect: 'none',
+// Main menu: Уровень, Мастерская, Полигон.
+const menuRoot = document.createElement('div');
+menuRoot.id = 'main-menu';
+document.body.appendChild(menuRoot);
+const menu = new MainMenu(menuRoot, (choice) => {
+  hud.setHidden(false);
+  if (choice === 'level') startGame();
+  else if (choice === 'range') startRange();
+  else if (choice === 'workshop') openWorkshop();
 });
-document.body.appendChild(overlay);
 
 
 const workshopRoot = document.createElement('div');
@@ -118,7 +119,7 @@ const workshop = new Workshop(
 function openWorkshop() {
   if (!states.is(STATES.MENU)) return;
   states.go(STATES.WORKSHOP);
-  overlay.style.display = 'none';
+  menu.hide();
   workshop.open();
 }
 
@@ -127,7 +128,6 @@ function startRange() {
   level.dispose();
   level = new RangeLevel(scene, { x: LEVEL_1.start.x + 0.2, z: LEVEL_1.start.z }, spec);
   hero.position.set(LEVEL_1.start.x, 0, LEVEL_1.start.z);
-  overlay.remove();
   states.go(STATES.PLAYING);
   hud.showHint('Полигон: светим вперёд, на мишенях — дальность и люкс');
 }
@@ -135,7 +135,6 @@ function startRange() {
 function startGame() {
   if (!states.is(STATES.MENU)) return;
   states.go(STATES.PLAYING);
-  overlay.remove();
   hud.showHint('Ящик стола. Пройди направо к выходу');
 }
 
@@ -159,18 +158,17 @@ bus.on('enemyDied', ({ type }) => console.log(`[enemy] died: ${type}`));
 
 window.addEventListener('keydown', (e) => {
   if (states.is(STATES.WORKSHOP)) {
-    if (e.code === 'Escape') { workshop.close(); overlay.style.display = 'flex'; states.go(STATES.MENU); }
+    if (e.code === 'Escape') { workshop.close(); menu.show(); states.go(STATES.MENU); }
     return;
   }
   if (e.code === 'KeyC' && states.is(STATES.PLAYING)) power.setCharge(100); // test helper
-  if (e.code === 'KeyW' && states.is(STATES.MENU)) { openWorkshop(); return; }
-  if (e.code === 'KeyT' && states.is(STATES.MENU)) {
-    startRange();
-    return;
-  }
-  startGame();
 });
-if (location.search.includes('play')) startGame();
+// Start on the main menu. Test URLs skip it: ?range or ?play
+if (location.search.includes('range')) { hud.setHidden(false); startRange(); }
+else if (location.search.includes('play')) startGame();
+else menu.show();
+// Hide the in-game HUD while the menu is on screen.
+hud.setHidden(true);
 
 /** Hit the hero from an enemy: applies charge loss with invulnerability and knockback. */
 function hitHero(pct, fromPos, source) {
@@ -220,7 +218,7 @@ const loop = new Loop(
       elapsed += dt;
       hero.update(dt, input.moveAxes(), input.aimAxes(), level.colliders, input.wasPressed('Space'));
       rig.update(hero.position, dt, 0);
-      level.update(dt, hero.position, power);
+      level.update(dt, hero.position, power, gfx.camera);
       if (level.atExit(hero.position.x) && !victoryShown) {
         victoryShown = true;
         showVictory();
@@ -313,8 +311,7 @@ const loop = new Loop(
       }
     }
 
-    if (typeof level.lux === 'function') level.lux = luxFor(origin, axis, beamCd, beamLumens);
-    if (level instanceof RangeLevel) level.update(gfx.camera, window.innerWidth, window.innerHeight);
+    level.lux = luxFor(origin, axis, beamCd, beamLumens);   // the range reads it; other levels ignore it
     particles.update(dt);
     hud.update(dt, power);
     input.endFrame();

@@ -7,6 +7,10 @@ import { Level } from './Level.js';
 
 // Distances in game metres. Real range ~ up to 27 m (MS18), so the far end goes to 10 game m (500 real m).
 export const RANGE_DISTANCES_M = [0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0];
+// Head tip offset from the hero's feet point along the beam (Convoy length 118 mm). Targets are measured from the lens.
+const LENS_OFFSET_M = 0.118;
+// Beam height above the floor: the head of the flashlight lies on the table (radius of the body).
+const BEAM_HEIGHT_M = 0.011;
 
 export class RangeLevel extends Level {
   /**
@@ -36,12 +40,11 @@ export class RangeLevel extends Level {
     floor.receiveShadow = true;
     this.root.add(floor);
 
-    // Fan of targets: each distance has its own bearing so they never stand in front of each other.
-    const n = RANGE_DISTANCES_M.length;
+    // Targets stand ON the beam axis, one after another along it, so each one reads the true lux for its distance.
     RANGE_DISTANCES_M.forEach((d, i) => {
-      const angle = ((i / (n - 1)) - 0.5) * 0.9; // spread from -0.45 to +0.45 rad
-      const x = heroStart.x + Math.cos(angle) * d;
-      const z = heroStart.z - Math.sin(angle) * d;
+      const x = heroStart.x;   // exactly on the axis: every target is inside the beam
+      // Distance is measured from the lens (the head tip), not from the feet: the beam starts there.
+      const z = heroStart.z - LENS_OFFSET_M - d;
       this.addTarget(x, z, d);
     });
   }
@@ -72,7 +75,8 @@ export class RangeLevel extends Level {
       padding: '2px 6px', borderRadius: '4px', whiteSpace: 'nowrap', display: 'none',
     });
     document.body.appendChild(label);
-    this.targets.push({ gameM, pos: new THREE.Vector3(x, 0.14, z), label, lux: 0 });
+    // The lux point sits at the beam height (the head), so the beam hits the target's centre.
+    this.targets.push({ gameM, pos: new THREE.Vector3(x, BEAM_HEIGHT_M, z), label, lux: 0 });
   }
 
   /**
@@ -82,7 +86,9 @@ export class RangeLevel extends Level {
    * @param {number} width
    * @param {number} height
    */
-  update(camera, width, height) {
+  update(dt, heroPos, power, camera) {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
     const v = new THREE.Vector3();
     for (const t of this.targets) {
       t.lux = this.lux(t.pos);

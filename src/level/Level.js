@@ -16,8 +16,14 @@ export class Level {
     this.bossDefeated = false;
   }
 
-  /** Called every frame. Subclasses override. */
-  update() {}
+  /**
+   * Called every frame by main.js. Same signature for every level.
+   * @param {number} dt seconds
+   * @param {{x:number,z:number}} heroPos hero feet position
+   * @param {object} power PowerSystem of the hero
+   * @param {THREE.Camera} camera for screen-space labels
+   */
+  update(dt, heroPos, power, camera) {}
 
   /** Boss name and HP for the boss bar, or null. */
   bossInfo() { return null; }
